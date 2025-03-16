@@ -199,7 +199,6 @@ void MainWindow::onDomainButtonClicked() {
     // Identify which button was clicked
     QPushButton *clickedButton = qobject_cast<QPushButton*>(sender());
     if (!clickedButton) return;
-
     if (clickedButton->objectName() == "entertain") {
         questionsPage("entertain");
     } else if (clickedButton->objectName()=="general") {
