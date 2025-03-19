@@ -29,7 +29,8 @@
     <string notr="true">background-color:transparent;
 border:1px solid white;
 border-radius:10px;
-spacing:10px;</string>
+spacing:10px;
+padding:5px 5px;</string>
    </property>
    <property name="text">
     <string>       Retour</string>
@@ -55,11 +56,15 @@ spacing:10px;</string>
    <property name="cursor">
     <cursorShape>PointingHandCursor</cursorShape>
    </property>
+   <property name="styleSheet">
+    <string notr="true">border:none;
+margin-left:30px;</string>
+   </property>
    <property name="text">
     <string/>
    </property>
   </widget>
-  <widget class="QLabel" name="label">
+  <widget class="QLabel" name="soundLbl">
    <property name="geometry">
     <rect>
      <x>120</x>
@@ -83,7 +88,7 @@ spacing:10px;</string>
     <string>Sound:</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_2">
+  <widget class="QLabel" name="musicLbl">
    <property name="geometry">
     <rect>
      <x>120</x>
@@ -112,7 +117,7 @@ spacing:10px;</string>
     <rect>
      <x>330</x>
      <y>190</y>
-     <width>21</width>
+     <width>20</width>
      <height>20</height>
     </rect>
    </property>
@@ -124,6 +129,10 @@ spacing:10px;</string>
    <property name="cursor">
     <cursorShape>PointingHandCursor</cursorShape>
    </property>
+   <property name="styleSheet">
+    <string notr="true">border:none;
+margin-left:30px;</string>
+   </property>
    <property name="text">
     <string/>
    </property>
@@ -133,7 +142,7 @@ spacing:10px;</string>
     <rect>
      <x>270</x>
      <y>240</y>
-     <width>121</width>
+     <width>82</width>
      <height>31</height>
     </rect>
    </property>
@@ -142,7 +151,11 @@ spacing:10px;</string>
    </property>
    <property name="styleSheet">
     <string notr="true">background-color:white;
-color:blue;</string>
+color:blue;
+max-width:150px;
+padding: 5px 3px;
+margin-right:100px;
+</string>
    </property>
    <item>
     <property name="text">
@@ -160,7 +173,7 @@ color:blue;</string>
     </property>
    </item>
   </widget>
-  <widget class="QLabel" name="label_3">
+  <widget class="QLabel" name="LangLbl">
    <property name="geometry">
     <rect>
      <x>120</x>

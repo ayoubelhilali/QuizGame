@@ -1,17 +1,55 @@
-#include "settingsdialog.h"
-#include "ui_SettingsDialog.h"
 #include <QPainter>
 #include <QSettings>
-#include <iostream>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+
+#include "settingsdialog.h"
+#include "ui_SettingsDialog.h"
+
 using namespace std ;
 
 SettingsDialog::SettingsDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::SettingsDialog) {
+
     ui->setupUi(this);  // Load the designed UI
+    setMinimumSize(500,300);
+
+    // Create a vertical layout
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+
+    // Create a horizontal layouts
+    QHBoxLayout *headlayout = new QHBoxLayout();
+    headlayout->addWidget(ui->closeBtn);
+    headlayout->addStretch();
+
+
+    QHBoxLayout *soundlayout = new QHBoxLayout();
+    soundlayout->addWidget(ui->soundLbl);
+    soundlayout->addWidget(ui->SoundCheckBox);
+
+    QHBoxLayout *musiclayout = new QHBoxLayout();
+    musiclayout->addWidget(ui->musicLbl);
+    musiclayout->addWidget(ui->MusicCheckBox);
+
+    QHBoxLayout *langlayout = new QHBoxLayout();
+    langlayout->addWidget(ui->LangLbl);
+    langlayout->addWidget(ui->LangBox);
+
+    // Add the horizontal layout inside the main layout
+    mainLayout->addLayout(headlayout);
+    mainLayout->addLayout(soundlayout);
+    mainLayout->addLayout(musiclayout);
+    mainLayout->addLayout(langlayout);
+
+    mainLayout->setSpacing(10);  // Space between widgets
+    mainLayout->setContentsMargins(0.2*this->width(), 40, 100, 80); // Add padding
+
+    // Apply the layout to your widget
+    setLayout(mainLayout);
+
     setWindowTitle("Settings");
     setWindowIcon(QIcon(":/images/Icons/settings.svg"));
-    setFixedSize(600,400);
 
     loadSettings(); // Load saved settings
 

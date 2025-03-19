@@ -1,0 +1,10 @@
+debug/answerbox.o
+debug/hovereffect.o
+debug/main.o
+debug/mainwindow.o
+debug/settingsdialog.o
+debug/qrc_resources.o
+debug/moc_answerbox.o
+debug/moc_hovereffect.o
+debug/moc_mainwindow.o
+debug/moc_settingsdialog.o

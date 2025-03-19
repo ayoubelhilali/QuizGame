@@ -25,11 +25,11 @@ class Ui_SettingsDialog
 public:
     QPushButton *closeBtn;
     QCheckBox *SoundCheckBox;
-    QLabel *label;
-    QLabel *label_2;
+    QLabel *soundLbl;
+    QLabel *musicLbl;
     QCheckBox *MusicCheckBox;
     QComboBox *LangBox;
-    QLabel *label_3;
+    QLabel *LangLbl;
 
     void setupUi(QDialog *SettingsDialog)
     {
@@ -43,7 +43,8 @@ public:
         closeBtn->setStyleSheet(QString::fromUtf8("background-color:transparent;\n"
 "border:1px solid white;\n"
 "border-radius:10px;\n"
-"spacing:10px;"));
+"spacing:10px;\n"
+"padding:5px 5px;"));
         QIcon icon(QIcon::fromTheme(QIcon::ThemeIcon::MediaSeekBackward));
         closeBtn->setIcon(icon);
         SoundCheckBox = new QCheckBox(SettingsDialog);
@@ -53,40 +54,48 @@ public:
         font.setPointSize(13);
         SoundCheckBox->setFont(font);
         SoundCheckBox->setCursor(QCursor(Qt::CursorShape::PointingHandCursor));
-        label = new QLabel(SettingsDialog);
-        label->setObjectName("label");
-        label->setGeometry(QRect(120, 140, 101, 16));
+        SoundCheckBox->setStyleSheet(QString::fromUtf8("border:none;\n"
+"margin-left:30px;"));
+        soundLbl = new QLabel(SettingsDialog);
+        soundLbl->setObjectName("soundLbl");
+        soundLbl->setGeometry(QRect(120, 140, 101, 16));
         QFont font1;
         font1.setFamilies({QString::fromUtf8("8514oem")});
         font1.setPointSize(9);
         font1.setBold(false);
         font1.setItalic(false);
-        label->setFont(font1);
-        label->setStyleSheet(QString::fromUtf8("font: 9pt \"8514oem\";"));
-        label_2 = new QLabel(SettingsDialog);
-        label_2->setObjectName("label_2");
-        label_2->setGeometry(QRect(120, 190, 101, 16));
-        label_2->setFont(font1);
-        label_2->setStyleSheet(QString::fromUtf8("font: 9pt \"8514oem\";"));
+        soundLbl->setFont(font1);
+        soundLbl->setStyleSheet(QString::fromUtf8("font: 9pt \"8514oem\";"));
+        musicLbl = new QLabel(SettingsDialog);
+        musicLbl->setObjectName("musicLbl");
+        musicLbl->setGeometry(QRect(120, 190, 101, 16));
+        musicLbl->setFont(font1);
+        musicLbl->setStyleSheet(QString::fromUtf8("font: 9pt \"8514oem\";"));
         MusicCheckBox = new QCheckBox(SettingsDialog);
         MusicCheckBox->setObjectName("MusicCheckBox");
-        MusicCheckBox->setGeometry(QRect(330, 190, 21, 20));
+        MusicCheckBox->setGeometry(QRect(330, 190, 20, 20));
         MusicCheckBox->setFont(font);
         MusicCheckBox->setCursor(QCursor(Qt::CursorShape::PointingHandCursor));
+        MusicCheckBox->setStyleSheet(QString::fromUtf8("border:none;\n"
+"margin-left:30px;"));
         LangBox = new QComboBox(SettingsDialog);
         LangBox->addItem(QString());
         LangBox->addItem(QString());
         LangBox->addItem(QString());
         LangBox->setObjectName("LangBox");
-        LangBox->setGeometry(QRect(270, 240, 121, 31));
+        LangBox->setGeometry(QRect(270, 240, 82, 31));
         LangBox->setCursor(QCursor(Qt::CursorShape::PointingHandCursor));
         LangBox->setStyleSheet(QString::fromUtf8("background-color:white;\n"
-"color:blue;"));
-        label_3 = new QLabel(SettingsDialog);
-        label_3->setObjectName("label_3");
-        label_3->setGeometry(QRect(120, 240, 101, 21));
-        label_3->setFont(font1);
-        label_3->setStyleSheet(QString::fromUtf8("font: 9pt \"8514oem\";"));
+"color:blue;\n"
+"max-width:150px;\n"
+"padding: 5px 3px;\n"
+"margin-right:100px;\n"
+""));
+        LangLbl = new QLabel(SettingsDialog);
+        LangLbl->setObjectName("LangLbl");
+        LangLbl->setGeometry(QRect(120, 240, 101, 21));
+        LangLbl->setFont(font1);
+        LangLbl->setStyleSheet(QString::fromUtf8("font: 9pt \"8514oem\";"));
 
         retranslateUi(SettingsDialog);
 
@@ -98,14 +107,14 @@ public:
         SettingsDialog->setWindowTitle(QCoreApplication::translate("SettingsDialog", "Dialog", nullptr));
         closeBtn->setText(QCoreApplication::translate("SettingsDialog", "       Retour", nullptr));
         SoundCheckBox->setText(QString());
-        label->setText(QCoreApplication::translate("SettingsDialog", "Sound:", nullptr));
-        label_2->setText(QCoreApplication::translate("SettingsDialog", "Music:", nullptr));
+        soundLbl->setText(QCoreApplication::translate("SettingsDialog", "Sound:", nullptr));
+        musicLbl->setText(QCoreApplication::translate("SettingsDialog", "Music:", nullptr));
         MusicCheckBox->setText(QString());
         LangBox->setItemText(0, QCoreApplication::translate("SettingsDialog", "Anglais", nullptr));
         LangBox->setItemText(1, QCoreApplication::translate("SettingsDialog", "Francais", nullptr));
         LangBox->setItemText(2, QCoreApplication::translate("SettingsDialog", "Arabe", nullptr));
 
-        label_3->setText(QCoreApplication::translate("SettingsDialog", "Language:", nullptr));
+        LangLbl->setText(QCoreApplication::translate("SettingsDialog", "Language:", nullptr));
     } // retranslateUi
 
 };

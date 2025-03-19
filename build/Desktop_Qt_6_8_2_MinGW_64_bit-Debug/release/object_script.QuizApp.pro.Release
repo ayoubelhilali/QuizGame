@@ -1,0 +1,10 @@
+release/answerbox.o
+release/hovereffect.o
+release/main.o
+release/mainwindow.o
+release/settingsdialog.o
+release/qrc_resources.o
+release/moc_answerbox.o
+release/moc_hovereffect.o
+release/moc_mainwindow.o
+release/moc_settingsdialog.o
