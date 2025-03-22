@@ -14,6 +14,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
 
     ui->setupUi(this);  // Load the designed UI
     setMinimumSize(500,300);
+    setMaximumSize(800,600);
 
     // Create a vertical layout
     QVBoxLayout *mainLayout = new QVBoxLayout(this);

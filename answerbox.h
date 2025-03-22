@@ -8,7 +8,7 @@
 class AnswerBox : public QWidget {
     Q_OBJECT
 public:
-    explicit AnswerBox(QString text, QString letter, QWidget *parent = nullptr);
+    explicit AnswerBox(QString text, QString letter,int correct, QWidget *parent = nullptr);
 
 private:
     QLabel *backgroundLbl;

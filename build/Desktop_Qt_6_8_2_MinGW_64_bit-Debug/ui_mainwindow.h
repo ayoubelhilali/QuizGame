@@ -11,10 +11,11 @@
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
+#include <QtWidgets/QGridLayout>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QMainWindow>
-#include <QtWidgets/QMenuBar>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QWidget>
 
@@ -24,71 +25,116 @@ class Ui_MainWindow
 {
 public:
     QWidget *centralwidget;
+    QWidget *container;
+    QWidget *layoutWidget;
+    QGridLayout *gridLayout;
     QPushButton *startBtn;
-    QLabel *label;
-    QPushButton *statsBtn;
     QPushButton *infoBtn;
+    QPushButton *statsBtn;
     QPushButton *settingsBtn;
-    QMenuBar *menubar;
+    QLabel *label;
+    QSpacerItem *horizontalSpacer;
     QStatusBar *statusbar;
 
     void setupUi(QMainWindow *MainWindow)
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName("MainWindow");
-        MainWindow->resize(878, 584);
+        MainWindow->setEnabled(true);
+        MainWindow->resize(621, 391);
+        MainWindow->setMinimumSize(QSize(0, 0));
         MainWindow->setStyleSheet(QString::fromUtf8(""));
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName("centralwidget");
-        startBtn = new QPushButton(centralwidget);
+        container = new QWidget(centralwidget);
+        container->setObjectName("container");
+        container->setGeometry(QRect(0, 0, 621, 391));
+        layoutWidget = new QWidget(container);
+        layoutWidget->setObjectName("layoutWidget");
+        layoutWidget->setGeometry(QRect(0, 0, 621, 373));
+        gridLayout = new QGridLayout(layoutWidget);
+        gridLayout->setObjectName("gridLayout");
+        gridLayout->setVerticalSpacing(60);
+        gridLayout->setContentsMargins(0, 0, 0, 20);
+        startBtn = new QPushButton(layoutWidget);
         startBtn->setObjectName("startBtn");
-        startBtn->setGeometry(QRect(330, 240, 174, 41));
+        startBtn->setMinimumSize(QSize(140, 45));
+        startBtn->setMaximumSize(QSize(170, 45));
+        startBtn->setBaseSize(QSize(100, 100));
         QFont font;
-        font.setPointSize(16);
+        font.setFamilies({QString::fromUtf8("Sigmar One")});
+        font.setPointSize(20);
+        font.setStrikeOut(false);
+        font.setKerning(false);
+        font.setStyleStrategy(QFont::NoAntialias);
+        font.setHintingPreference(QFont::PreferFullHinting);
         startBtn->setFont(font);
         startBtn->setCursor(QCursor(Qt::CursorShape::PointingHandCursor));
-        startBtn->setStyleSheet(QString::fromUtf8("border: 2px solid white; /* Initial border color */\n"
-"border-radius: 5px;\n"
-"width:150px;\n"
-"    "));
-        label = new QLabel(centralwidget);
-        label->setObjectName("label");
-        label->setGeometry(QRect(250, 100, 271, 71));
+        startBtn->setAutoFillBackground(false);
+        startBtn->setStyleSheet(QString::fromUtf8("startBtn{\n"
+"	padding: 10 20px;\n"
+"	font-weight:normal;\n"
+"}"));
+
+        gridLayout->addWidget(startBtn, 1, 1, 1, 1);
+
+        infoBtn = new QPushButton(layoutWidget);
+        infoBtn->setObjectName("infoBtn");
+        infoBtn->setMinimumSize(QSize(100, 50));
+        infoBtn->setMaximumSize(QSize(120, 50));
+        infoBtn->setBaseSize(QSize(100, 100));
         QFont font1;
-        font1.setFamilies({QString::fromUtf8("Stencil")});
-        font1.setPointSize(48);
-        font1.setBold(false);
-        font1.setItalic(false);
-        label->setFont(font1);
+        font1.setPointSize(39);
+        font1.setKerning(false);
+        infoBtn->setFont(font1);
+        infoBtn->setCursor(QCursor(Qt::CursorShape::PointingHandCursor));
+
+        gridLayout->addWidget(infoBtn, 3, 0, 1, 1);
+
+        statsBtn = new QPushButton(layoutWidget);
+        statsBtn->setObjectName("statsBtn");
+        statsBtn->setMinimumSize(QSize(100, 50));
+        statsBtn->setMaximumSize(QSize(110, 50));
+        statsBtn->setBaseSize(QSize(100, 100));
+        QFont font2;
+        font2.setPointSize(39);
+        statsBtn->setFont(font2);
+        statsBtn->setCursor(QCursor(Qt::CursorShape::PointingHandCursor));
+
+        gridLayout->addWidget(statsBtn, 3, 1, 1, 1, Qt::AlignmentFlag::AlignHCenter|Qt::AlignmentFlag::AlignVCenter);
+
+        settingsBtn = new QPushButton(layoutWidget);
+        settingsBtn->setObjectName("settingsBtn");
+        settingsBtn->setMinimumSize(QSize(100, 50));
+        settingsBtn->setMaximumSize(QSize(120, 50));
+        settingsBtn->setBaseSize(QSize(100, 100));
+        settingsBtn->setFont(font2);
+        settingsBtn->setCursor(QCursor(Qt::CursorShape::PointingHandCursor));
+
+        gridLayout->addWidget(settingsBtn, 3, 2, 1, 1, Qt::AlignmentFlag::AlignVCenter);
+
+        label = new QLabel(layoutWidget);
+        label->setObjectName("label");
+        QFont font3;
+        font3.setFamilies({QString::fromUtf8("Stencil")});
+        font3.setPointSize(48);
+        font3.setBold(false);
+        font3.setItalic(false);
+        label->setFont(font3);
         label->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
         label->setStyleSheet(QString::fromUtf8("font-size: 50px;\n"
 "font-weight: bold;\n"
 "font: 48pt \"Stencil\";\n"
 "color: white;\n"
 ""));
-        statsBtn = new QPushButton(centralwidget);
-        statsBtn->setObjectName("statsBtn");
-        statsBtn->setGeometry(QRect(520, 340, 80, 51));
-        QFont font2;
-        font2.setPointSize(39);
-        statsBtn->setFont(font2);
-        statsBtn->setCursor(QCursor(Qt::CursorShape::PointingHandCursor));
-        infoBtn = new QPushButton(centralwidget);
-        infoBtn->setObjectName("infoBtn");
-        infoBtn->setGeometry(QRect(370, 340, 80, 51));
-        infoBtn->setFont(font2);
-        infoBtn->setCursor(QCursor(Qt::CursorShape::PointingHandCursor));
-        settingsBtn = new QPushButton(centralwidget);
-        settingsBtn->setObjectName("settingsBtn");
-        settingsBtn->setGeometry(QRect(210, 340, 80, 122));
-        settingsBtn->setFont(font2);
-        settingsBtn->setCursor(QCursor(Qt::CursorShape::PointingHandCursor));
-        settingsBtn->setStyleSheet(QString::fromUtf8("padding:20px;"));
+
+        gridLayout->addWidget(label, 0, 0, 1, 3, Qt::AlignmentFlag::AlignHCenter|Qt::AlignmentFlag::AlignVCenter);
+
+        horizontalSpacer = new QSpacerItem(40, 20, QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Minimum);
+
+        gridLayout->addItem(horizontalSpacer, 2, 0, 1, 3);
+
         MainWindow->setCentralWidget(centralwidget);
-        menubar = new QMenuBar(MainWindow);
-        menubar->setObjectName("menubar");
-        menubar->setGeometry(QRect(0, 0, 878, 17));
-        MainWindow->setMenuBar(menubar);
         statusbar = new QStatusBar(MainWindow);
         statusbar->setObjectName("statusbar");
         MainWindow->setStatusBar(statusbar);
@@ -101,11 +147,11 @@ public:
     void retranslateUi(QMainWindow *MainWindow)
     {
         MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "MainWindow", nullptr));
-        startBtn->setText(QCoreApplication::translate("MainWindow", "Start", nullptr));
-        label->setText(QCoreApplication::translate("MainWindow", "Quiz Game", nullptr));
-        statsBtn->setText(QString());
+        startBtn->setText(QCoreApplication::translate("MainWindow", "start", nullptr));
         infoBtn->setText(QString());
+        statsBtn->setText(QString());
         settingsBtn->setText(QString());
+        label->setText(QCoreApplication::translate("MainWindow", "Quiz Game", nullptr));
     } // retranslateUi
 
 };

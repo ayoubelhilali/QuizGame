@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QTimer>
+#include <QResizeEvent>
 #include <QEvent>
 #include <QPushButton>
 
@@ -31,7 +32,7 @@ private:
     Ui::MainWindow *ui;
 protected:
     void paintEvent(QPaintEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
 
 };
-
-#endif // MAINWINDOW_H
+#endif

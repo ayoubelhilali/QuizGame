@@ -21,42 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     setMinimumSize(800,500);
 
-    // Get the existing layout from the central widget
-    QVBoxLayout *mainLayout = qobject_cast<QVBoxLayout*>(ui->centralwidget->layout());
-
-    if (!mainLayout) {  // If no layout exists, create one
-        mainLayout = new QVBoxLayout(ui->centralwidget);
-        ui->centralwidget->setLayout(mainLayout);
-    }
-
-
-    // Create a horizontal layouts
-    QHBoxLayout *titlelayout = new QHBoxLayout();
-    titlelayout->addWidget(ui->label);
-    titlelayout->setAlignment(Qt::AlignCenter);
-    titlelayout->setContentsMargins(20, 40, 100, 20); // Add padding
-
-
-    QHBoxLayout *startlayout = new QHBoxLayout();
-    startlayout->addStretch();
-    startlayout->addWidget(ui->startBtn);
-    startlayout->addStretch();
-    startlayout->setContentsMargins(20, 0, 100, 20); // Add padding
-
-    QHBoxLayout *btnslayout = new QHBoxLayout();
-    btnslayout->addWidget(ui->settingsBtn);
-    btnslayout->addWidget(ui->infoBtn);
-    btnslayout->addWidget(ui->statsBtn);
-    btnslayout->setSpacing(30);
-    btnslayout->setContentsMargins(20, 50, 100, 30); // Add padding
-
-    // Add the horizontal layout inside the main layout
-    mainLayout->addLayout(titlelayout);
-    mainLayout->addLayout(startlayout);
-    mainLayout->addLayout(btnslayout);
-
-    mainLayout->setSpacing(10);  // Space between widgets
-    mainLayout->setContentsMargins(0.2*this->width(), 40, 100, 80); // Add padding
+    ui->gridLayout->setAlignment(Qt::AlignCenter);
 
     // Create a drop shadow effect
     QGraphicsDropShadowEffect *shadowEffect = new QGraphicsDropShadowEffect(this);
@@ -66,6 +31,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Apply the shadow effect to the label
     ui->label->setGraphicsEffect(shadowEffect);
+
+    ui->startBtn->setStyleSheet("background-color:transparent;"
+                                "border: 2px solid white;"
+                                "font-size:27;"
+                                "border-radius:5px");
+
 
     // Stats Icon
     ui->statsBtn->setIcon(QIcon(":/images/Icons/stats-icon.svg"));
@@ -112,6 +83,27 @@ MainWindow::MainWindow(QWidget *parent)
     resize(800,500);
 
 }
+
+void MainWindow::resizeEvent(QResizeEvent *event){
+    QSize parentSize = event->size();
+
+    // Get the QWidget that contains the layout (make sure this widget holds the layout)
+    QWidget *layoutContainer = ui->container;  // The widget containing the layout
+
+    // Get the size of the layout container widget
+    QSize layoutSize = layoutContainer->size();
+
+    // Calculate the center position
+    int x = (parentSize.width() - layoutSize.width()) / 2;
+    int y = (parentSize.height() - layoutSize.height()) / 2;
+
+    // Move the layout container widget to the center of the parent window
+    layoutContainer->move(x, y);
+
+    // Call the base class implementation if necessary
+    QWidget::resizeEvent(event);
+}
+
 
 void MainWindow::paintEvent(QPaintEvent *)
 {
@@ -161,6 +153,11 @@ void MainWindow::on_startBtn_clicked() {
     progressBar->setValue(0);
     progressBar->show();
 
+    QHBoxLayout *waitlayout=new QHBoxLayout(this);
+    waitlayout->addWidget(ui->label);
+    waitlayout->addWidget(waitlabel);
+    waitlayout->addWidget(progressBar);
+
     QTimer *timer = new QTimer(this);  // Create a timer
     int duration = 1000;  // 5 seconds
     int interval = 50;  // Update every 50ms
@@ -188,7 +185,6 @@ void MainWindow::DomainsChoose(){
     // Create domain heading
     QLabel *domainHead=new QLabel(this);
     domainHead->setText("Choose your domain: ");
-    domainHead->setGeometry(260,60,300,100);
     domainHead->setStyleSheet("font-size:28px;"
                               "background-color:transparent;");
     // Create a drop shadow effect
@@ -219,16 +215,36 @@ void MainWindow::DomainsChoose(){
 
     // Set properties
     QPushButton *buttons[] = {generalDomain, logicDomain, techDomain, entertainDomain};
-    int xPos[] = {170, 320, 470, 320};
-    int yPos[] = {140, 140, 140, 270};
     for (int i = 0; i < 4; ++i) {
         buttons[i]->setStyleSheet("background-color:transparent;");
         buttons[i]->setIconSize(QSize(120,120));
-        buttons[i]->setGeometry(xPos[i],yPos[i],130,130);
         buttons[i]->setCursor(Qt::PointingHandCursor);
         connect(buttons[i], &QPushButton::clicked, this, &MainWindow::onDomainButtonClicked);
         buttons[i]->show();
     }
+
+    // posistionate with Qgrid & Qvboxlayout:
+    QHBoxLayout *domainheadlayout=new QHBoxLayout(this);
+    domainheadlayout->addWidget(domainHead);
+    domainheadlayout->setAlignment(Qt::AlignCenter);
+
+    QGridLayout *domainslayout=new QGridLayout(this);
+    domainslayout->addWidget(generalDomain,0,0);
+    domainslayout->addWidget(logicDomain,0,1);
+    domainslayout->addWidget(techDomain,0,2);
+    domainslayout->addWidget(entertainDomain,1,0);
+    QVBoxLayout *mainLayout=new QVBoxLayout(this);
+
+    if (this->centralWidget()->layout()) {
+        // Remove the existing layout
+        QLayout *oldLayout = this->centralWidget()->layout();
+        delete oldLayout;  // Delete the old layout to avoid memory leaks
+    }
+    mainLayout->addLayout(domainheadlayout);
+    mainLayout->addLayout(domainslayout);
+    mainLayout->setContentsMargins(100,100,100,100);
+    this->centralWidget()->setLayout(mainLayout);
+
     // Assign names to buttons
     generalDomain->setObjectName("general");
     logicDomain->setObjectName("logic");
@@ -243,7 +259,8 @@ void MainWindow::questionsPage(const QString &domain){
     QLabel *domainNameTxt=new QLabel(this);
     domainNameTxt->setText("Domain: ");
     domainNameTxt->setGeometry(120,100,80,30);
-    domainNameTxt->setStyleSheet("font: 9pt '8514oem';");
+    domainNameTxt->setStyleSheet("font: 9pt '8514oem';"
+                                 "color:yellow;");
     domainNameTxt->show();
 
     QLabel *domainName=new QLabel(this);
@@ -256,7 +273,8 @@ void MainWindow::questionsPage(const QString &domain){
     QLabel *scoreTxt=new QLabel(this);
     scoreTxt->setText("Score: ");
     scoreTxt->setGeometry(540,100,100,30);
-    scoreTxt->setStyleSheet("font: 9pt '8514oem';");
+    scoreTxt->setStyleSheet("font: 9pt '8514oem';"
+                            "color:yellow;");
     scoreTxt->show();
 
     QLabel *score=new QLabel(this);
@@ -269,71 +287,62 @@ void MainWindow::questionsPage(const QString &domain){
     questionLabel->setText("What is the first muslim woman in the world?");
     questionLabel->setStyleSheet("font: 15pt 'Terminal';");
     questionLabel->setWordWrap(true);
+    questionLabel->setAlignment(Qt::AlignCenter);
     questionLabel->setGeometry(200,150,400,80);
     questionLabel->show();
 
-    AnswerBox *B=new AnswerBox("khadija","A",this);
-    B->show();
 
-    /*QLabel *answerlbl1 =new QLabel(this);
-    QLabel *answertxt1 =new QLabel(this);
-    QLabel *answerltr1 =new QLabel(this);
-    answerlbl1->move(140, 210);
-    answertxt1->setText("Khadija");
-    answertxt1->setGeometry(167,235,172,50);
-    answerltr1->setText("A");
-    answerltr1->setGeometry(150,220,32,32);
 
-    QLabel *answerlbl2 =new QLabel(this);
-    QLabel *answertxt2 =new QLabel(this);
-    QLabel *answerltr2 =new QLabel(this);
-    answerlbl2->move(180, 210);
-    answertxt2->setText("Halima");
-    answertxt2->setGeometry(167,235,172,50);
-    answerltr2->setText("A");
-    answerltr2->setGeometry(150,220,32,32);
+    AnswerBox *B1=new AnswerBox("khadija","A",1,this);
+    B1->show();
+    AnswerBox *B2=new AnswerBox("Halima","B",0,this);
+    B2->show();
+    AnswerBox *B3=new AnswerBox("Fatima","C",-1,this);
+    B3->show();
+    AnswerBox *B4=new AnswerBox("Aicha","D",-1,this);
+    B4->show();
 
-    QLabel *answerlbl3 =new QLabel(this);
-    QLabel *answertxt3 =new QLabel(this);
-    QLabel *answerltr3 =new QLabel(this);
-    answerlbl3->move(140, 250);
-    answertxt3->setText("Hafsa");
-    answertxt3->setGeometry(167,235,172,50);
-    answerltr3->setText("A");
-    answerltr3->setGeometry(150,220,32,32);
+    // Get the existing layout from the central widget
+    QVBoxLayout *mainLayout = qobject_cast<QVBoxLayout*>(ui->centralwidget->layout());
 
-    QLabel *answerlbl4 =new QLabel(this);
-    QLabel *answertxt4 =new QLabel(this);
-    QLabel *answerltr4 =new QLabel(this);
-    answerlbl4->move(180, 250);
-    answertxt4->setText("Fatima");
-    answertxt4->setGeometry(167,235,172,50);
-    answerltr4->setText("A");
-    answerltr4->setGeometry(150,220,32,32);*/
+    if (!mainLayout) {  // If no layout exists, create one
+        mainLayout = new QVBoxLayout(ui->centralwidget);
+        ui->centralwidget->setLayout(mainLayout);
+    }
 
-    /*QLabel *labels[]={answerlbl1,answerlbl2,answerlbl3,answerlbl4};
-    QLabel *labelstxt[]={answertxt1,answertxt2,answertxt3,answertxt4};
-    QLabel *answerltr[]={answerltr1,answerltr2,answerltr2,answerltr4};
+    QHBoxLayout *headlayout=new QHBoxLayout(this);
+    headlayout->addSpacing(20);
+    headlayout->addWidget(domainNameTxt);
+    headlayout->addWidget(domainName);
+    headlayout->addStretch();
+    headlayout->addWidget(scoreTxt);
+    headlayout->addWidget(score);
+    headlayout->addSpacing(20);
 
-    for (int i = 0; i < 4; ++i) {
-        QPixmap pixmap2(":/images/answer.svg");
-        QPixmap scaledPixmap2 = pixmap2.scaled(300, 100, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-        labels[i]->setPixmap(scaledPixmap2);
-        // Set QLabel size to match the final pixmap dimensions
-        labels[i]->setFixedSize(scaledPixmap2.size());
-        labels[i]->show();
-        labelstxt[i]->setStyleSheet("background-color:rgba(0, 255, 0, 0.5);"
-                                 "border-radius:10px;"
-                                 "text-align:center");
-        labelstxt[i]->setAlignment(Qt::AlignCenter);
-        labelstxt[i]->show();
+    // Create a wrapper widget
+    QWidget *headWidget = new QWidget(this); // Assuming 'this' is the parent widget
 
-        answerltr[i]->setStyleSheet("background-color:green;"
-                                 "border-radius:16px;"
-                                 "text-align:center");
-        answerltr[i]->setAlignment(Qt::AlignCenter);
-        answerltr[i]->show();
-    }*/
+    // Set the QHBoxLayout as the layout of the wrapper widget
+    headWidget->setLayout(headlayout);
+
+    // Set the maximum width for the wrapper widget
+    int maximumWidth = 900; // Replace 500 with your desired maximum width in pixels
+    headWidget->setMaximumWidth(maximumWidth);
+
+
+    QGridLayout *answerslayout =new QGridLayout(this);
+    answerslayout->addWidget(B1,1,0);
+    answerslayout->addWidget(B2,1,1);
+    answerslayout->addWidget(B3,2,0);
+    answerslayout->addWidget(B4,2,1);
+
+    mainLayout->addWidget(headWidget);
+    mainLayout->addSpacing(15);
+    mainLayout->addWidget(questionLabel);
+    mainLayout->addSpacing(15);
+    mainLayout->addLayout(answerslayout);
+    mainLayout->setContentsMargins(140,80,140,80);
+    setLayout(mainLayout);
 }
 
 void MainWindow::onDomainButtonClicked() {
