@@ -7,133 +7,136 @@
 #include <QPixmap>
 #include <QGridLayout>
 #include <QDebug>
+#include <memory>
 
 #include "mainwindow.h"
 #include "settingsdialog.h"
 #include "ui_mainwindow.h"
 #include "hovereffect.h"
 #include "answerbox.h"
+#include "circletimer.h"
+
+namespace
+{
+    const int MIN_WIDTH = 800;
+    const int MIN_HEIGHT = 500;
+    const QColor SHADOW_COLOR(0, 194, 203);
+    const int SHADOW_BLUR_RADIUS = 50;
+    const int BUTTON_SHADOW_BLUR_RADIUS = 10;
+    const int BUTTON_ICON_SIZE = 30;
+    const QString BUTTON_STYLE = "background-color:transparent; border: 2px solid white; font-size:27; border-radius:5px";
+    const QString ICON_PATH = ":/Icons/";
+}
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setMinimumSize(800,500);
+    setMinimumSize(MIN_WIDTH, MIN_HEIGHT);
 
     ui->gridLayout->setAlignment(Qt::AlignCenter);
 
-    // Create a drop shadow effect
-    QGraphicsDropShadowEffect *shadowEffect = new QGraphicsDropShadowEffect(this);
-    shadowEffect->setBlurRadius(50); // Adjust the blur radius
-    shadowEffect->setColor(QColor(0, 194, 203)); // Shadow color (#00c2cb)
-    shadowEffect->setOffset(0, 0);
+    applyShadowEffect(ui->label, SHADOW_BLUR_RADIUS, SHADOW_COLOR);
 
-    // Apply the shadow effect to the label
-    ui->label->setGraphicsEffect(shadowEffect);
+    setupButton(ui->startBtn, "startBtn");
+    setupButton(ui->statsBtn, "stats-icon.svg");
+    setupButton(ui->infoBtn, "info.svg");
+    setupButton(ui->settingsBtn, "settings.svg");
 
-    ui->startBtn->setStyleSheet("background-color:transparent;"
-                                "border: 2px solid white;"
-                                "font-size:27;"
-                                "border-radius:5px");
-
-
-    // Stats Icon
-    ui->statsBtn->setIcon(QIcon(":/images/Icons/stats-icon.svg"));
-    ui->statsBtn->setStyleSheet("background-color:transparent;"
-                                "border: 2px solid white;"
-                                "font-size:100px;"
-                                "border-radius:5px");
-    ui->statsBtn->setIconSize(QSize(30,30));
-
-    // Info Button
-    ui->infoBtn->setIcon(QIcon(":/images/Icons/info.svg"));
-    ui->infoBtn->setStyleSheet("background-color:transparent;"
-                                "border: 2px solid white;"
-                                "font-size:100px;"
-                                "border-radius:5px");
-    ui->infoBtn->setIconSize(QSize(30,30));
-
-    // settings Icon
-    ui->settingsBtn->setIcon(QIcon(":/images/Icons/settings.svg"));
-    ui->settingsBtn->setStyleSheet("background-color:transparent;"
-                               "border: 2px solid white;"
-                               "font-size:100px;"
-                               "border-radius:5px");
-    ui->settingsBtn->setIconSize(QSize(30,30));
-
-    QPushButton *buttons[]={ui->startBtn,ui->statsBtn,ui->infoBtn,ui->settingsBtn};
-    for (int i = 0; i < 4; ++i) {
-        // Create a drop shadow effect
-        QGraphicsDropShadowEffect *shadowEffect = new QGraphicsDropShadowEffect(this);
-        shadowEffect->setBlurRadius(10); // Adjust the blur radius
-        shadowEffect->setColor(QColor(0, 194, 203)); // Shadow color (#00c2cb)
-        shadowEffect->setOffset(0, 0); // No offset
-
-        // Apply the shadow effect to the buttons
-        buttons[i]->setGraphicsEffect(shadowEffect);
+    QPushButton *buttons[] = {ui->startBtn, ui->statsBtn, ui->infoBtn, ui->settingsBtn};
+    for (QPushButton *button : buttons)
+    {
+        applyShadowEffect(button, BUTTON_SHADOW_BLUR_RADIUS, SHADOW_COLOR);
+        new HoverEffect(button);
     }
 
-    // Hover Effect t
-    new HoverEffect(ui->startBtn);
-    new HoverEffect(ui->statsBtn);
-    new HoverEffect(ui->infoBtn);
-    new HoverEffect(ui->settingsBtn);
-
-    resize(800,500);
-
+    resize(MIN_WIDTH, MIN_HEIGHT);
 }
 
-void MainWindow::resizeEvent(QResizeEvent *event){
+void MainWindow::applyShadowEffect(QWidget *widget, int blurRadius, const QColor &color)
+{
+    auto shadowEffect = std::make_unique<QGraphicsDropShadowEffect>(this);
+    shadowEffect->setBlurRadius(blurRadius);
+    shadowEffect->setColor(color);
+    shadowEffect->setOffset(0, 0);
+    widget->setGraphicsEffect(shadowEffect.release());
+}
+
+void MainWindow::setupButton(QPushButton *button, const QString &iconName)
+{
+    button->setIcon(QIcon(ICON_PATH + iconName));
+    button->setStyleSheet(BUTTON_STYLE);
+    button->setIconSize(QSize(BUTTON_ICON_SIZE, BUTTON_ICON_SIZE));
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
     QSize parentSize = event->size();
-
-    // Get the QWidget that contains the layout (make sure this widget holds the layout)
-    QWidget *layoutContainer = ui->container;  // The widget containing the layout
-
-    // Get the size of the layout container widget
+    QWidget *layoutContainer = ui->container;
     QSize layoutSize = layoutContainer->size();
-
-    // Calculate the center position
     int x = (parentSize.width() - layoutSize.width()) / 2;
     int y = (parentSize.height() - layoutSize.height()) / 2;
-
-    // Move the layout container widget to the center of the parent window
     layoutContainer->move(x, y);
-
-    // Call the base class implementation if necessary
     QWidget::resizeEvent(event);
 }
-
 
 void MainWindow::paintEvent(QPaintEvent *)
 {
     QPainter painter(this);
     QPixmap pixmap(":/images/quiz-background.jpg");
-    painter.drawPixmap(0, 0, width(), height(), pixmap); // Resizes dynamically
+    painter.drawPixmap(0, 0, width(), height(), pixmap);
 }
 
 MainWindow::~MainWindow()
 {
-    delete ui;
 }
 
-void MainWindow::on_startBtn_clicked() {
-    // delete the btn after clicked
-    delete ui->startBtn;
-    delete ui->statsBtn;
-    delete ui->infoBtn;
-    delete ui->settingsBtn;
+void MainWindow::on_startBtn_clicked()
+{
+    deleteButtons({ui->startBtn, ui->statsBtn, ui->infoBtn, ui->settingsBtn});
 
-    // Create the label dynamically
-    QLabel *waitlabel=new QLabel(this);
-    waitlabel->setText("Please wait ...");
-    waitlabel->setGeometry(360,80,300,300);
-    waitlabel->setStyleSheet("font-size:20px;");
-    waitlabel->show();
+    auto waitLabel = createLabel("Please wait ...", 20, Qt::AlignCenter);
+    auto progressBar = createProgressBar();
 
-    // create the progress Bar dynamically
-    QProgressBar *progressBar=new QProgressBar(this);
-    progressBar->setGeometry(200,250,400,30);
+    auto waitLayout = new QVBoxLayout();
+    ui->label->setAlignment(Qt::AlignCenter);
+    waitLayout->addWidget(ui->label);
+    waitLayout->addSpacing(20);
+    waitLayout->addWidget(waitLabel);
+    waitLayout->addWidget(progressBar);
+    waitLayout->setAlignment(Qt::AlignCenter);
+    waitLayout->setContentsMargins(200, 100, 200, 200);
+
+    auto waitWidget = new QWidget(this);
+    waitWidget->setLayout(waitLayout);
+    waitWidget->setMaximumWidth(500);
+
+    replaceCentralWidgetLayout(waitLayout);
+    waitWidget->show();
+
+    startProgressBar(progressBar, waitLabel);
+}
+
+void MainWindow::deleteButtons(const std::initializer_list<QPushButton *> &buttons)
+{
+    for (QPushButton *button : buttons)
+    {
+        delete button;
+    }
+}
+
+QLabel *MainWindow::createLabel(const QString &text, int fontSize, Qt::Alignment alignment)
+{
+    auto label = new QLabel(text, this);
+    label->setStyleSheet(QString("font-size: %1px;").arg(fontSize));
+    label->setAlignment(alignment);
+    label->setWordWrap(true);
+    return label;
+}
+
+QProgressBar *MainWindow::createProgressBar()
+{
+    auto progressBar = new QProgressBar(this);
     progressBar->setStyleSheet(
         "QProgressBar {"
         "   font-size: 20px;"
@@ -147,235 +150,306 @@ void MainWindow::on_startBtn_clicked() {
         "QProgressBar::chunk {"
         "   background-color: white;"
         "   border-radius: 8px;"
-        "}"
-    );
-    progressBar->setRange(0,100);
+        "}");
+    progressBar->setRange(0, 100);
     progressBar->setValue(0);
-    progressBar->show();
+    progressBar->setAlignment(Qt::AlignCenter);
+    progressBar->setMaximumWidth(700);
+    return progressBar;
+}
 
-    QHBoxLayout *waitlayout=new QHBoxLayout(this);
-    waitlayout->addWidget(ui->label);
-    waitlayout->addWidget(waitlabel);
-    waitlayout->addWidget(progressBar);
+void MainWindow::replaceCentralWidgetLayout(QLayout *newLayout)
+{
+    QWidget *centralWidget = this->centralWidget();
+    if (centralWidget && centralWidget->layout())
+    {
+        delete centralWidget->layout();
+    }
+    centralWidget->setLayout(newLayout);
+}
 
-    QTimer *timer = new QTimer(this);  // Create a timer
-    int duration = 1000;  // 5 seconds
-    int interval = 50;  // Update every 50ms
-    int steps = duration / interval;  // Total steps
-    int stepSize = 100 / steps;  // Progress increase per step
-    int *progress = new int(0);  // Track progress
+void MainWindow::startProgressBar(QProgressBar *progressBar, QLabel *waitLabel)
+{
+    auto timer = new QTimer(this);
+    int duration = 1000; // Total duration in milliseconds
+    int interval = 50; // Interval in milliseconds
+    int steps = duration / interval;
+    int stepSize = 100 / steps;
+    int progress = 0;
 
-    connect(timer, &QTimer::timeout, this, [=]() mutable {
-        if (*progress < 100) {
-            *progress += stepSize;
-            progressBar->setValue(*progress);
+    connect(timer, &QTimer::timeout, this, [=] () mutable {
+        if (progress < 100) {
+            progress += stepSize;
+            progressBar->setValue(progress);
         } else {
-            timer->stop();  // Stop when reaching 100%
-            delete progress;
-            delete waitlabel;
-            delete progressBar;
-            delete ui->label;
+            timer->stop();
+            ui->label->hide();
+            waitLabel->hide();
+            progressBar->hide();
             DomainsChoose();
         }
     });
-    timer->start(interval);  // Start the timer
-};
+    timer->start(interval);
+}
 
-void MainWindow::DomainsChoose(){
-    // Create domain heading
-    QLabel *domainHead=new QLabel(this);
-    domainHead->setText("Choose your domain: ");
-    domainHead->setStyleSheet("font-size:28px;"
-                              "background-color:transparent;");
-    // Create a drop shadow effect
-    QGraphicsDropShadowEffect *shadowEffect5 = new QGraphicsDropShadowEffect(this);
-    shadowEffect5->setBlurRadius(10); // Adjust the blur radius
-    shadowEffect5->setColor(QColor(0, 194, 203)); // Shadow color (#00c2cb)
-    shadowEffect5->setOffset(0, 0); // No offset
+void MainWindow::DomainsChoose()
+{
+    QPushButton *backbutton = new QPushButton(this);
+    backbutton->setText(" <    Back");
+    backbutton->setCursor(Qt::PointingHandCursor);
+    backbutton->setMinimumSize(80, 30);
+    backbutton->setStyleSheet("QPushButton{"
+                              "background-color:transparent;"
+                              "border:1px solid white;"
+                              "border-radius: 10px;"
+                              "}"
+                              "QPushButton:hover{"
+                              "background-color:rgba(255,255,255,0.5;"
+                              "}");
+    connect(backbutton, &QPushButton::clicked, this, &MainWindow::onBackButtonClicked);
 
-    domainHead->setGraphicsEffect(shadowEffect5);
-    domainHead->show();
+    auto domainHead = createLabel("Choose your domain: ", 28, Qt::AlignCenter);
+    applyShadowEffect(domainHead, BUTTON_SHADOW_BLUR_RADIUS, SHADOW_COLOR);
 
-    // Create Domains buttons
-    QPushButton *generalDomain = new QPushButton(this);
-    generalDomain->setIcon(QIcon(":/images/general.svg"));
+    auto generalDomain = createDomainButton("general.svg");
+    auto logicDomain = createDomainButton("logic.svg");
+    auto techDomain = createDomainButton("tech.svg");
+    auto entertainDomain = createDomainButton("entertain.svg");
 
-    QPushButton *logicDomain = new QPushButton(this);
-    logicDomain->setIcon(QIcon(":/images/logic.svg"));
-
-
-    // Create Domains buttons
-    QPushButton *techDomain = new QPushButton(this);
-    techDomain->setIcon(QIcon(":/images/tech.svg"));
-
-
-    // Create Domains buttons
-    QPushButton *entertainDomain = new QPushButton(this);
-    entertainDomain->setIcon(QIcon(":/images/entertain.svg"));
-
-    // Set properties
     QPushButton *buttons[] = {generalDomain, logicDomain, techDomain, entertainDomain};
-    for (int i = 0; i < 4; ++i) {
-        buttons[i]->setStyleSheet("background-color:transparent;");
-        buttons[i]->setIconSize(QSize(120,120));
-        buttons[i]->setCursor(Qt::PointingHandCursor);
-        connect(buttons[i], &QPushButton::clicked, this, &MainWindow::onDomainButtonClicked);
-        buttons[i]->show();
+    for (QPushButton *button : buttons)
+    {
+        button->setCursor(Qt::PointingHandCursor);
+        button->setMaximumWidth(140); // Increased button width
+        button->setMaximumHeight(180); // Increased button height
+        connect(button, &QPushButton::clicked, this, &MainWindow::onDomainButtonClicked);
+        button->show();
     }
 
-    // posistionate with Qgrid & Qvboxlayout:
-    QHBoxLayout *domainheadlayout=new QHBoxLayout(this);
-    domainheadlayout->addWidget(domainHead);
-    domainheadlayout->setAlignment(Qt::AlignCenter);
+    auto domainHeadLayout = new QHBoxLayout();
+    domainHeadLayout->addWidget(backbutton, Qt::AlignLeft);
+    domainHeadLayout->addSpacing(10);
+    domainHeadLayout->addWidget(domainHead, Qt::AlignCenter);
+    domainHeadLayout->setContentsMargins(10, 10, 10, 10);
+    domainHeadLayout->setAlignment(Qt::AlignCenter);
 
-    QGridLayout *domainslayout=new QGridLayout(this);
-    domainslayout->addWidget(generalDomain,0,0);
-    domainslayout->addWidget(logicDomain,0,1);
-    domainslayout->addWidget(techDomain,0,2);
-    domainslayout->addWidget(entertainDomain,1,0);
-    QVBoxLayout *mainLayout=new QVBoxLayout(this);
+    QWidget *domainheadwid = new QWidget(this);
+    domainheadwid->setLayout(domainHeadLayout);
+    domainheadwid->setMaximumWidth(800);
 
-    if (this->centralWidget()->layout()) {
-        // Remove the existing layout
-        QLayout *oldLayout = this->centralWidget()->layout();
-        delete oldLayout;  // Delete the old layout to avoid memory leaks
+    auto domainsLayout = new QVBoxLayout(); // Changed to QVBoxLayout to handle multiple rows
+    auto firstRowLayout = new QHBoxLayout();
+    auto secondRowLayout = new QHBoxLayout();
+
+    for (int i = 0; i < 4; ++i)
+    {
+        if (i < 3)
+        {
+            firstRowLayout->addWidget(buttons[i]);
+        }
+        else
+        {
+            secondRowLayout->addWidget(buttons[i]);
+        }
     }
-    mainLayout->addLayout(domainheadlayout);
-    mainLayout->addLayout(domainslayout);
-    mainLayout->setContentsMargins(100,100,100,100);
-    this->centralWidget()->setLayout(mainLayout);
 
-    // Assign names to buttons
+    firstRowLayout->setSpacing(20);
+    secondRowLayout->setSpacing(20);
+    domainsLayout->addLayout(firstRowLayout);
+    domainsLayout->addLayout(secondRowLayout);
+
+    auto mainLayout = new QVBoxLayout();
+    replaceCentralWidgetLayout(mainLayout);
+    mainLayout->addWidget(domainheadwid);
+    mainLayout->addLayout(domainsLayout);
+    mainLayout->setContentsMargins(100, 100, 100, 100);
+
     generalDomain->setObjectName("general");
     logicDomain->setObjectName("logic");
     techDomain->setObjectName("tech");
     entertainDomain->setObjectName("entertain");
 
+    // Adjust layout based on available space
+    adjustDomainLayout(firstRowLayout, secondRowLayout, buttons);
 }
 
-void MainWindow::questionsPage(const QString &domain){
+void MainWindow::adjustDomainLayout(QHBoxLayout *firstRowLayout, QHBoxLayout *secondRowLayout, QPushButton *buttons[])
+{
+    int availableWidth = this->width() - 200; // Adjust based on your margins
+    int buttonWidth = buttons[0]->maximumWidth() + firstRowLayout->spacing();
+    int buttonsPerRow = availableWidth / buttonWidth;
 
+    if (buttonsPerRow < 4)
+    {
+        firstRowLayout->removeWidget(buttons[3]);
+        secondRowLayout->addWidget(buttons[3]);
+    }
+}
 
-    QLabel *domainNameTxt=new QLabel(this);
-    domainNameTxt->setText("Domain: ");
-    domainNameTxt->setGeometry(120,100,80,30);
-    domainNameTxt->setStyleSheet("font: 9pt '8514oem';"
-                                 "color:yellow;");
-    domainNameTxt->show();
+QPushButton *MainWindow::createDomainButton(const QString &iconName)
+{
+    auto button = new QPushButton(this);
+    button->setIcon(QIcon(ICON_PATH + iconName));
+    button->setStyleSheet("background-color:transparent;");
+    button->setIconSize(QSize(130, 140)); // Increased icon size
+    return button;
+}
 
-    QLabel *domainName=new QLabel(this);
-    domainName->setText(domain);
-    domainName->setGeometry(200,85,250,60);
-    domainName->setStyleSheet("font: 9pt '8514oem';");
-    domainName->setWordWrap(true);
-    domainName->show();
+void MainWindow::questionsPage(const QString &domain)
+{
 
-    QLabel *scoreTxt=new QLabel(this);
-    scoreTxt->setText("Score: ");
-    scoreTxt->setGeometry(540,100,100,30);
-    scoreTxt->setStyleSheet("font: 9pt '8514oem';"
-                            "color:yellow;");
-    scoreTxt->show();
+    auto domainNameTxt = createLabel("Domain: ", 10, Qt::AlignLeft);
+    domainNameTxt->setStyleSheet("color:yellow;"
+                                 "font: 9pt '8514oem';");
+    auto domainName = createLabel(domain, 10, Qt::AlignLeft);
+    domainName->setStyleSheet( "font:20pt 'Terminal';");
 
-    QLabel *score=new QLabel(this);
-    score->setText("100");
-    score->setGeometry(600,100,100,30);
-    score->setStyleSheet("font: 9pt '8514oem';");
-    score->show();
+    CircleTimer *timer = new CircleTimer(this);
+    timer->resize(300, 300);
+    timer->startTimer();
+    timer->show();
 
-    QLabel *questionLabel =new QLabel(this);
-    questionLabel->setText("What is the first muslim woman in the world?");
+    auto scoreTxt = createLabel("Score: ", 10, Qt::AlignRight);
+    scoreTxt->setStyleSheet("color:yellow;"
+                                 "font: 15pt 'Terminal';");
+    auto score = createLabel("100", 10, Qt::AlignRight);
+    score->setStyleSheet("font: 12pt 'Terminal';");
+
+    auto questionLabel = createLabel("What is the first muslim woman in the world?", 15, Qt::AlignCenter);
     questionLabel->setStyleSheet("font: 15pt 'Terminal';");
     questionLabel->setWordWrap(true);
-    questionLabel->setAlignment(Qt::AlignCenter);
-    questionLabel->setGeometry(200,150,400,80);
-    questionLabel->show();
 
+    auto B1 = new AnswerBox("khadija", "A",-1, this);
+    auto B2 = new AnswerBox("Halima", "B",-1,this);
+    auto B3 = new AnswerBox("Fatima", "C", -1,this);
+    auto B4 = new AnswerBox("Aicha", "D",-1,this);
 
+    connect(B1, &AnswerBox::clicked, this, &MainWindow::onAnswerBoxClicked);
+    connect(B2, &AnswerBox::clicked, this, &MainWindow::onAnswerBoxClicked);
+    connect(B3, &AnswerBox::clicked, this, &MainWindow::onAnswerBoxClicked);
+    connect(B4, &AnswerBox::clicked, this, &MainWindow::onAnswerBoxClicked);
 
-    AnswerBox *B1=new AnswerBox("khadija","A",1,this);
-    B1->show();
-    AnswerBox *B2=new AnswerBox("Halima","B",0,this);
-    B2->show();
-    AnswerBox *B3=new AnswerBox("Fatima","C",-1,this);
-    B3->show();
-    AnswerBox *B4=new AnswerBox("Aicha","D",-1,this);
-    B4->show();
-
-    // Get the existing layout from the central widget
-    QVBoxLayout *mainLayout = qobject_cast<QVBoxLayout*>(ui->centralwidget->layout());
-
-    if (!mainLayout) {  // If no layout exists, create one
+    auto mainLayout = qobject_cast<QVBoxLayout *>(ui->centralwidget->layout());
+    if (!mainLayout)
+    {
         mainLayout = new QVBoxLayout(ui->centralwidget);
         ui->centralwidget->setLayout(mainLayout);
     }
 
-    QHBoxLayout *headlayout=new QHBoxLayout(this);
-    headlayout->addSpacing(20);
-    headlayout->addWidget(domainNameTxt);
-    headlayout->addWidget(domainName);
-    headlayout->addStretch();
-    headlayout->addWidget(scoreTxt);
-    headlayout->addWidget(score);
-    headlayout->addSpacing(20);
+    auto headLayout = new QHBoxLayout();
+    auto scorelayout=new QHBoxLayout();
+    auto domainlayout=new QHBoxLayout();
 
-    // Create a wrapper widget
-    QWidget *headWidget = new QWidget(this); // Assuming 'this' is the parent widget
+    domainlayout->addWidget(domainNameTxt);
+    domainlayout->addWidget(domainName);
+    domainlayout->setAlignment(Qt::AlignLeft);
 
-    // Set the QHBoxLayout as the layout of the wrapper widget
-    headWidget->setLayout(headlayout);
+    scorelayout->addWidget(scoreTxt);
+    scorelayout->addWidget(score);
+    scorelayout->setAlignment(Qt::AlignRight);
 
-    // Set the maximum width for the wrapper widget
-    int maximumWidth = 900; // Replace 500 with your desired maximum width in pixels
-    headWidget->setMaximumWidth(maximumWidth);
+    headLayout->addSpacing(20);
+    headLayout->addLayout(domainlayout);
+    headLayout->addSpacing(30);
+    headLayout->addWidget(timer); // Ensure the timer is added to the head layout
+    headLayout->addSpacing(30);
+    headLayout->addLayout(scorelayout);
 
+    auto headWidget = new QWidget(this);
+    headWidget->setLayout(headLayout);
+    headWidget->setMaximumWidth(900);
 
-    QGridLayout *answerslayout =new QGridLayout(this);
-    answerslayout->addWidget(B1,1,0);
-    answerslayout->addWidget(B2,1,1);
-    answerslayout->addWidget(B3,2,0);
-    answerslayout->addWidget(B4,2,1);
+    auto answersLayout = new QGridLayout();
+    answersLayout->addWidget(B1, 1, 0);
+    answersLayout->addWidget(B2, 1, 1);
+    answersLayout->addWidget(B3, 2, 0);
+    answersLayout->addWidget(B4, 2, 1);
 
     mainLayout->addWidget(headWidget);
     mainLayout->addSpacing(15);
     mainLayout->addWidget(questionLabel);
     mainLayout->addSpacing(15);
-    mainLayout->addLayout(answerslayout);
-    mainLayout->setContentsMargins(140,80,140,80);
+    mainLayout->addLayout(answersLayout);
+    mainLayout->setContentsMargins(120, 80, 120, 80);
     setLayout(mainLayout);
 }
 
-void MainWindow::onDomainButtonClicked() {
-    // Clean the window:
-    QList<QPushButton*> buttons = this->findChildren<QPushButton*>();
-    for (QPushButton *btn : buttons) {
-        btn->hide();       // Hide button immediately
-        btn->deleteLater();
+void MainWindow::onDomainButtonClicked()
+{
+    clearWidgets<QPushButton>();
+    clearWidgets<QLabel>();
+
+    QPushButton *clickedButton = qobject_cast<QPushButton *>(sender());
+    if (!clickedButton)
+        return;
+
+    if (clickedButton->objectName() == "entertain")
+    {
+        questionsPage("Entertainment & Pop Culture");
     }
-    QList<QLabel*> labels = this->findChildren<QLabel*>();
-    for (QLabel *label : labels) {
-        label->hide();        // Hide the label
-        label->deleteLater();
-    }
-    // Identify which button was clicked
-    QPushButton *clickedButton = qobject_cast<QPushButton*>(sender());
-    if (!clickedButton) return;
-    if (clickedButton->objectName() == "entertain") {
-        questionsPage("Entertainment & Pop Culture ");
-    } else if (clickedButton->objectName()=="general") {
+    else if (clickedButton->objectName() == "general")
+    {
         questionsPage("General Knowledge");
-    } else if (clickedButton->objectName()=="tech") {
+    }
+    else if (clickedButton->objectName() == "tech")
+    {
         questionsPage("Tech & Coding");
-    } else if (clickedButton->objectName()=="logic") {
+    }
+    else if (clickedButton->objectName() == "logic")
+    {
         questionsPage("Logic & Brain Teasers");
     }
+}
 
+template <typename T>
+void MainWindow::clearWidgets()
+{
+    QList<T *> widgets = this->findChildren<T *>();
+    for (T *widget : widgets)
+    {
+        widget->hide();
+        widget->deleteLater();
+    }
+}
 
+void MainWindow::onAnswerBoxClicked(AnswerBox *box)
+{
+    // Handle the click event for the AnswerBox
+    qDebug() << "AnswerBox clicked:" << box->getText();
 }
 
 void MainWindow::on_settingsBtn_clicked()
 {
     SettingsDialog settingsDialog(this);
-    settingsDialog.exec();    // Open the settings as a modal window
+    settingsDialog.exec();
 }
 
+void MainWindow::onBackButtonClicked()
+{
+    // Navigate back to the home page
+    /*clearWidgets<QPushButton>();
+    clearWidgets<QLabel>();*/
+
+    // Recreate the home page layout
+    ui->setupUi(this);
+    setMinimumSize(MIN_WIDTH, MIN_HEIGHT);
+
+    ui->gridLayout->setAlignment(Qt::AlignCenter);
+
+    applyShadowEffect(ui->label, SHADOW_BLUR_RADIUS, SHADOW_COLOR);
+
+    setupButton(ui->startBtn, "startBtn");
+    setupButton(ui->statsBtn, "stats-icon.svg");
+    setupButton(ui->infoBtn, "info.svg");
+    setupButton(ui->settingsBtn, "settings.svg");
+
+    QPushButton *buttons[] = {ui->startBtn, ui->statsBtn, ui->infoBtn, ui->settingsBtn};
+    for (QPushButton *button : buttons)
+    {
+        applyShadowEffect(button, BUTTON_SHADOW_BLUR_RADIUS, SHADOW_COLOR);
+        new HoverEffect(button);
+    }
+
+    resize(MIN_WIDTH+10, MIN_HEIGHT);
+
+}

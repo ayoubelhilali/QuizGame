@@ -5,14 +5,17 @@
         <file>Icons/stats-icon.svg</file>
         <file>Icons/settings.svg</file>
         <file>Icons/checked.png</file>
-        <file>images/answer.svg</file>
     </qresource>
     <qresource prefix="/">
-        <file>images/entertain.svg</file>
-        <file>images/general.svg</file>
-        <file>images/logic.svg</file>
-        <file>images/tech.svg</file>
-        <file>images/question.svg</file>
-        <file>images/answer.svg</file>
+        <file>Icons/answer.svg</file>
+        <file>Icons/checked.png</file>
+        <file>Icons/entertain.svg</file>
+        <file>Icons/general.svg</file>
+        <file>Icons/info.svg</file>
+        <file>Icons/logic.svg</file>
+        <file>Icons/question.svg</file>
+        <file>Icons/settings.svg</file>
+        <file>Icons/stats-icon.svg</file>
+        <file>Icons/tech.svg</file>
     </qresource>
 </RCC>
