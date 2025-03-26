@@ -1,4 +1,3 @@
-release/ResizableText.o
 release/answerbox.o
 release/circletimer.o
 release/hovereffect.o
@@ -7,7 +6,6 @@ release/mainwindow.o
 release/questionsgenerator.o
 release/settingsdialog.o
 release/qrc_resources.o
-release/moc_ResizableText.o
 release/moc_answerbox.o
 release/moc_circletimer.o
 release/moc_hovereffect.o

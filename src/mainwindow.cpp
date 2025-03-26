@@ -10,12 +10,12 @@
 #include <memory>
 #include <QButtonGroup>
 
-#include "mainwindow.h"
-#include "settingsdialog.h"
+#include "headers/mainwindow.h"
+#include "headers/settingsdialog.h"
 #include "ui_mainwindow.h"
-#include "hovereffect.h"
-#include "answerbox.h"
-#include "circletimer.h"
+#include "headers/hovereffect.h"
+#include "headers/answerbox.h"
+#include "headers/circletimer.h"
 
 namespace
 {

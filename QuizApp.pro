@@ -11,23 +11,21 @@ TARGET = QuizApp.pro
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    ResizableText.cpp \
-    answerbox.cpp \
-    circletimer.cpp \
-    hovereffect.cpp \
-    main.cpp \
-    mainwindow.cpp \
-    questionsgenerator.cpp \
-    settingsdialog.cpp
+    src/answerbox.cpp \
+    src/circletimer.cpp \
+    src/hovereffect.cpp \
+    src/main.cpp \
+    src/mainwindow.cpp \
+    src/questionsgenerator.cpp \
+    src/settingsdialog.cpp \
 
 HEADERS += \
-    ResizableText.h \
-    answerbox.h \
-    circletimer.h \
-    hovereffect.h \
-    mainwindow.h \
-    questionsgenerator.h \
-    settingsdialog.h
+    headers/answerbox.h \
+    headers/circletimer.h \
+    headers/hovereffect.h \
+    headers/mainwindow.h \
+    headers/questionsgenerator.h \
+    headers/settingsdialog.h \
 
 FORMS += \
     mainwindow.ui \

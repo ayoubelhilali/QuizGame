@@ -3,7 +3,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 
-#include "settingsdialog.h"
+#include "headers/settingsdialog.h"
 #include "ui_SettingsDialog.h"
 
 using namespace std ;

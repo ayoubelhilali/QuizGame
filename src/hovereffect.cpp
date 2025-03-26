@@ -1,4 +1,4 @@
-#include "hovereffect.h"
+#include "headers/hovereffect.h"
 
 HoverEffect::HoverEffect(QPushButton *button) : QObject(button), button(button), progress(0), targetProgress(0)
 {

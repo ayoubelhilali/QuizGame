@@ -1,3 +1,3 @@
-#include "questionsgenerator.h"
+#include "headers/questionsgenerator.h"
 
 questionsGenerator::questionsGenerator() {}

@@ -1,4 +1,4 @@
-#include "answerbox.h"
+#include "headers/answerbox.h"
 #include <QMouseEvent>
 
 AnswerBox::AnswerBox(QString t, QString l, int c, QWidget *parent)
