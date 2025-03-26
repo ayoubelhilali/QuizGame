@@ -8,6 +8,7 @@
 #include <QGridLayout>
 #include <QDebug>
 #include <memory>
+#include <QButtonGroup>
 
 #include "mainwindow.h"
 #include "settingsdialog.h"
@@ -18,8 +19,8 @@
 
 namespace
 {
-    const int MIN_WIDTH = 800;
-    const int MIN_HEIGHT = 500;
+    const int MIN_WIDTH = 900;
+    const int MIN_HEIGHT = 600;
     const QColor SHADOW_COLOR(0, 194, 203);
     const int SHADOW_BLUR_RADIUS = 50;
     const int BUTTON_SHADOW_BLUR_RADIUS = 10;
@@ -204,8 +205,9 @@ void MainWindow::DomainsChoose()
                               "border-radius: 10px;"
                               "}"
                               "QPushButton:hover{"
-                              "background-color:rgba(255,255,255,0.5;"
+                              "background-color:rgba(255,255,255,0.5);"
                               "}");
+    backbutton->setMinimumWidth(100);
     connect(backbutton, &QPushButton::clicked, this, &MainWindow::onBackButtonClicked);
 
     auto domainHead = createLabel("Choose your domain: ", 28, Qt::AlignCenter);
@@ -228,14 +230,11 @@ void MainWindow::DomainsChoose()
 
     auto domainHeadLayout = new QHBoxLayout();
     domainHeadLayout->addWidget(backbutton, Qt::AlignLeft);
-    domainHeadLayout->addSpacing(10);
     domainHeadLayout->addWidget(domainHead, Qt::AlignCenter);
-    domainHeadLayout->setContentsMargins(10, 10, 10, 10);
-    domainHeadLayout->setAlignment(Qt::AlignCenter);
 
     QWidget *domainheadwid = new QWidget(this);
     domainheadwid->setLayout(domainHeadLayout);
-    domainheadwid->setMaximumWidth(800);
+    domainheadwid->setMinimumWidth(600);
 
     auto domainsLayout = new QVBoxLayout(); // Changed to QVBoxLayout to handle multiple rows
     auto firstRowLayout = new QHBoxLayout();
@@ -260,7 +259,7 @@ void MainWindow::DomainsChoose()
 
     auto mainLayout = new QVBoxLayout();
     replaceCentralWidgetLayout(mainLayout);
-    mainLayout->addWidget(domainheadwid);
+    mainLayout->addWidget(domainheadwid,0,Qt::AlignCenter);
     mainLayout->addLayout(domainsLayout);
     mainLayout->setContentsMargins(100, 100, 100, 100);
 
@@ -305,7 +304,8 @@ void MainWindow::questionsPage(const QString &domain)
     domainName->setStyleSheet( "font:20pt 'Terminal';");
 
     CircleTimer *timer = new CircleTimer(this);
-    timer->resize(300, 300);
+    timer->setFixedSize(60,60);
+    timer->setStyleSheet("margin:14px;");
     timer->startTimer();
     timer->show();
 
@@ -315,7 +315,8 @@ void MainWindow::questionsPage(const QString &domain)
     auto score = createLabel("100", 10, Qt::AlignRight);
     score->setStyleSheet("font: 12pt 'Terminal';");
 
-    auto questionLabel = createLabel("What is the first muslim woman in the world?", 15, Qt::AlignCenter);
+    auto questionLabel = createLabel(generateQuestion(domain), 15, Qt::AlignCenter);
+    applyShadowEffect(questionLabel,SHADOW_BLUR_RADIUS,SHADOW_COLOR);
     questionLabel->setStyleSheet("font: 15pt 'Terminal';");
     questionLabel->setWordWrap(true);
 
@@ -336,28 +337,33 @@ void MainWindow::questionsPage(const QString &domain)
         ui->centralwidget->setLayout(mainLayout);
     }
 
+    auto domainwidget=new QWidget;
+    domainwidget->setFixedSize(200,80);
+
+    auto scorewidget=new QWidget;
+    scorewidget->setFixedSize(180,80);
+
     auto headLayout = new QHBoxLayout();
-    auto scorelayout=new QHBoxLayout();
-    auto domainlayout=new QHBoxLayout();
+    auto scorelayout=new QHBoxLayout(scorewidget);
+    auto domainlayout=new QHBoxLayout(domainwidget);
 
     domainlayout->addWidget(domainNameTxt);
     domainlayout->addWidget(domainName);
-    domainlayout->setAlignment(Qt::AlignLeft);
 
     scorelayout->addWidget(scoreTxt);
     scorelayout->addWidget(score);
     scorelayout->setAlignment(Qt::AlignRight);
 
     headLayout->addSpacing(20);
-    headLayout->addLayout(domainlayout);
-    headLayout->addSpacing(30);
-    headLayout->addWidget(timer); // Ensure the timer is added to the head layout
-    headLayout->addSpacing(30);
-    headLayout->addLayout(scorelayout);
+    headLayout->addWidget(domainwidget,Qt::AlignLeft);
+    headLayout->addWidget(timer,Qt::AlignCenter);
+    headLayout->addWidget(scorewidget,Qt::AlignRight);
+    headLayout->addSpacing(20);
 
     auto headWidget = new QWidget(this);
     headWidget->setLayout(headLayout);
-    headWidget->setMaximumWidth(900);
+    headWidget->setMinimumWidth(700);
+    headWidget->setMinimumHeight(70);
 
     auto answersLayout = new QGridLayout();
     answersLayout->addWidget(B1, 1, 0);
@@ -365,12 +371,12 @@ void MainWindow::questionsPage(const QString &domain)
     answersLayout->addWidget(B3, 2, 0);
     answersLayout->addWidget(B4, 2, 1);
 
-    mainLayout->addWidget(headWidget);
+    mainLayout->addWidget(headWidget,0,Qt::AlignCenter);
     mainLayout->addSpacing(15);
     mainLayout->addWidget(questionLabel);
     mainLayout->addSpacing(15);
     mainLayout->addLayout(answersLayout);
-    mainLayout->setContentsMargins(120, 80, 120, 80);
+    mainLayout->setContentsMargins(100, 80, 100, 80);
     setLayout(mainLayout);
 }
 
@@ -414,8 +420,25 @@ void MainWindow::clearWidgets()
 
 void MainWindow::onAnswerBoxClicked(AnswerBox *box)
 {
+    auto *timer=this->findChild<CircleTimer*>();
+
     // Handle the click event for the AnswerBox
     qDebug() << "AnswerBox clicked:" << box->getText();
+    box->getTextlabel()->setStyleSheet("background-color:rgba(0,0,0,0.3);");
+    box->disconnect();
+    for (auto btn : this->findChildren<AnswerBox *>()) {
+        if (btn != box) {
+            btn->disconnect();
+            btn->setCursor(Qt::ArrowCursor);
+        }
+    }
+    qDebug() << "timer: " << timer->gettime();
+}
+
+QString MainWindow::generateQuestion(QString domain){
+    QLabel *question = new QLabel("Question in the domain of: ");
+    question->setText(question->text() + domain);
+    return question->text();
 }
 
 void MainWindow::on_settingsBtn_clicked()
@@ -426,10 +449,6 @@ void MainWindow::on_settingsBtn_clicked()
 
 void MainWindow::onBackButtonClicked()
 {
-    // Navigate back to the home page
-    /*clearWidgets<QPushButton>();
-    clearWidgets<QLabel>();*/
-
     // Recreate the home page layout
     ui->setupUi(this);
     setMinimumSize(MIN_WIDTH, MIN_HEIGHT);

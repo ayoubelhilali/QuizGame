@@ -37,6 +37,7 @@ public:
     void adjustDomainLayout(QHBoxLayout *firstRowLayout, QHBoxLayout *secondRowLayout, QPushButton *buttons[]);
     void onAnswerBoxClicked(AnswerBox *box);
     void onBackButtonClicked();
+    QString generateQuestion(QString domain);
     QProgressBar *createProgressBar();
     QLabel *createLabel(const QString &text, int fontSize, Qt::Alignment alignment);
     QPushButton *createDomainButton(const QString &iconName);

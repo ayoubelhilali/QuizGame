@@ -17,6 +17,7 @@ SOURCES += \
     hovereffect.cpp \
     main.cpp \
     mainwindow.cpp \
+    questionsgenerator.cpp \
     settingsdialog.cpp
 
 HEADERS += \
@@ -25,6 +26,7 @@ HEADERS += \
     circletimer.h \
     hovereffect.h \
     mainwindow.h \
+    questionsgenerator.h \
     settingsdialog.h
 
 FORMS += \

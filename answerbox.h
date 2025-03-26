@@ -12,6 +12,7 @@ public:
     explicit AnswerBox(QString t, QString l, int c, QWidget *parent = nullptr);
     bool checkcorrecct(AnswerBox *A);
     QString getText() const { return text; }
+    QLabel *getTextlabel() const{return textLbl;}
 
 signals:
     void clicked(AnswerBox *box);
