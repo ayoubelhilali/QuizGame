@@ -10,9 +10,15 @@ class CircleTimer : public QWidget {
 public:
     explicit CircleTimer(QWidget *parent = nullptr);
     void startTimer();
+    void stopTimer();
     int gettime(){return timeRemaining;};
     void setProgressColor(QColor );
     QColor getProgressColor();
+    void setTimeRemaining(int start){
+        timeRemaining=start;
+        updateTimer();
+        startTimer();
+    }
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -20,8 +26,7 @@ protected:
 private:
     int timeRemaining;  // Countdown from 10 to 0
     QTimer *timer;
-    QColor color;        // Timer to update every second
-
+    QColor color;
 private slots:
     void updateTimer();
 };

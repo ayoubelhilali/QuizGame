@@ -5,9 +5,11 @@ debug/main.o
 debug/mainwindow.o
 debug/questionsgenerator.o
 debug/settingsdialog.o
+debug/typingeffect.o
 debug/qrc_resources.o
 debug/moc_answerbox.o
 debug/moc_circletimer.o
 debug/moc_hovereffect.o
 debug/moc_mainwindow.o
 debug/moc_settingsdialog.o
+debug/moc_typingeffect.o

@@ -1,4 +1,6 @@
 #include "headers/circletimer.h"
+#include "headers/answerbox.h"
+#include "headers/mainwindow.h"
 #include <QPainter>
 #include <QFont>
 
@@ -11,15 +13,38 @@ void CircleTimer::startTimer() {
     timer->start(1000);  // Start timer with 1-second intervals
 }
 
+void CircleTimer::stopTimer() {
+    timer->stop();  // Start timer with 1-second intervals
+}
+
 void CircleTimer::updateTimer() {
+    // Get reference to MainWindow (assuming it's the top-level parent)
+    MainWindow *mainWin = nullptr;
+    QObject *parentObj = this->parent();
+    while (parentObj) {
+        mainWin = qobject_cast<MainWindow *>(parentObj);
+        if (mainWin) break;  // Found MainWindow, exit loop
+        parentObj = parentObj->parent();
+    }
+
     if (timeRemaining > 0) {
         timeRemaining--;
         update();  // Refresh UI
-        if(this->gettime()<=3){
-            setProgressColor(QColor(255,0,0));
+        if (this->gettime() <= 3) {
+            setProgressColor(QColor(255, 0, 0));  // Change color to red
+        }else{
+            setProgressColor(QColor(0, 255, 0));
         }
     } else {
-        timer->stop();
+        if (mainWin) {  // Ensure mainWin is valid
+            for (auto answers : mainWin->findChildren<AnswerBox *>()) {
+                answers->setEnabled(false);  // Disable buttons
+            }
+        }
+        if (timer) {  // Ensure timer is valid
+            timer->stop();
+        }
+        // Check the last clicked button
     }
 }
 

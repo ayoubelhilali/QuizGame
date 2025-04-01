@@ -17,5 +17,9 @@
         <file>Icons/settings.svg</file>
         <file>Icons/stats-icon.svg</file>
         <file>Icons/tech.svg</file>
+        <file>Icons/pauseBtn.png</file>
+        <file>Icons/play-button.png</file>
+        <file>Icons/reload.png</file>
+        <file>Icons/settings.png</file>
     </qresource>
 </RCC>

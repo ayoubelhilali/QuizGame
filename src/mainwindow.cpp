@@ -16,6 +16,7 @@
 #include "headers/hovereffect.h"
 #include "headers/answerbox.h"
 #include "headers/circletimer.h"
+#include "headers/typingeffect.h"
 
 namespace
 {
@@ -79,6 +80,11 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     int y = (parentSize.height() - layoutSize.height()) / 2;
     layoutContainer->move(x, y);
     QWidget::resizeEvent(event);
+
+    QMainWindow::resizeEvent(event);
+    if (pauseBtn) {  // Check if button exists
+        pauseBtn->move(this->width()/13, this->height()/13);  // Keep it at top-left
+    }
 }
 
 void MainWindow::paintEvent(QPaintEvent *)
@@ -97,6 +103,9 @@ void MainWindow::on_startBtn_clicked()
     deleteButtons({ui->startBtn, ui->statsBtn, ui->infoBtn, ui->settingsBtn});
 
     auto waitLabel = createLabel("Please wait ...", 20, Qt::AlignCenter);
+    TypingAnimation *typingEffect = new TypingAnimation(waitLabel, 30); // Speed: 50ms per character
+    typingEffect->start();
+
     auto progressBar = createProgressBar();
 
     auto waitLayout = new QVBoxLayout();
@@ -296,6 +305,26 @@ QPushButton *MainWindow::createDomainButton(const QString &iconName)
 
 void MainWindow::questionsPage(const QString &domain)
 {
+    if (!pauseBtn) {  // Prevent creating multiple times
+        pauseBtn = new QPushButton(this);
+        pauseBtn->setIcon(QIcon(ICON_PATH + "pauseBtn.png"));
+        pauseBtn->setStyleSheet("QPushButton {"
+                                "background-color: transparent;"
+                                "border-radius: 25px;"
+                                "width: 50px;"
+                                "height: 50px;"
+                                "}");
+        pauseBtn->setIconSize(QSize(50, 50));
+        pauseBtn->setFixedSize(50, 50);
+        pauseBtn->setCursor(Qt::PointingHandCursor);
+        pauseBtn->show();
+
+        // Set initial position
+        pauseBtn->move(this->width()/13, this->height()/13);
+        ispaused=false;
+        connect(pauseBtn, &QPushButton::clicked, this, &MainWindow::onPauseClicked);
+    }
+
 
     auto domainNameTxt = createLabel("Domain: ", 10, Qt::AlignLeft);
     domainNameTxt->setStyleSheet("color:yellow;"
@@ -303,7 +332,7 @@ void MainWindow::questionsPage(const QString &domain)
     auto domainName = createLabel(domain, 10, Qt::AlignLeft);
     domainName->setStyleSheet( "font:20pt 'Terminal';");
 
-    CircleTimer *timer = new CircleTimer(this);
+    timer = new CircleTimer(this);
     timer->setFixedSize(60,60);
     timer->setStyleSheet("margin:14px;");
     timer->startTimer();
@@ -391,20 +420,21 @@ void MainWindow::onDomainButtonClicked()
 
     if (clickedButton->objectName() == "entertain")
     {
-        questionsPage("Entertainment & Pop Culture");
+        domain="Entertainment & Pop Culture";
     }
     else if (clickedButton->objectName() == "general")
     {
-        questionsPage("General Knowledge");
+        domain="General Knowledge";
     }
     else if (clickedButton->objectName() == "tech")
     {
-        questionsPage("Tech & Coding");
+        domain="Tech & Coding";
     }
     else if (clickedButton->objectName() == "logic")
     {
-        questionsPage("Logic & Brain Teasers");
+        domain="Logic & Brain Teasers";
     }
+    questionsPage(domain);
 }
 
 template <typename T>
@@ -420,19 +450,12 @@ void MainWindow::clearWidgets()
 
 void MainWindow::onAnswerBoxClicked(AnswerBox *box)
 {
-    auto *timer=this->findChild<CircleTimer*>();
-
-    // Handle the click event for the AnswerBox
-    qDebug() << "AnswerBox clicked:" << box->getText();
     box->getTextlabel()->setStyleSheet("background-color:rgba(0,0,0,0.3);");
-    box->disconnect();
     for (auto btn : this->findChildren<AnswerBox *>()) {
         if (btn != box) {
-            btn->disconnect();
-            btn->setCursor(Qt::ArrowCursor);
+            btn->getTextlabel()->setStyleSheet("");
         }
     }
-    qDebug() << "timer: " << timer->gettime();
 }
 
 QString MainWindow::generateQuestion(QString domain){
@@ -471,4 +494,97 @@ void MainWindow::onBackButtonClicked()
 
     resize(MIN_WIDTH+10, MIN_HEIGHT);
 
+}
+
+void MainWindow::pausewindow(){
+    // Create the pause overlay
+    pauseOverlay = new QWidget(this);
+    pauseOverlay->setStyleSheet("background-color: rgba(0, 0, 0, 0.7);");
+    pauseOverlay->setGeometry(0, 0, width(), height());
+    pauseOverlay->show(); // Show overlay
+
+    // Container for pause menu
+    QWidget *pausecontainer = new QWidget(pauseOverlay);
+    pausecontainer->setGeometry(width() / 4, height() / 4, width() / 2, height() / 2);
+    pausecontainer->setStyleSheet("background-color: rgba(0, 0, 0, 0.4);"
+                                  "border:1px solid white;"
+                                  "border-radius:10px;");
+    pausecontainer->show();
+    // ✅ Set Layout Correctly
+    QVBoxLayout *overlayLayout = new QVBoxLayout(pausecontainer);
+    pausecontainer->setLayout(overlayLayout); // **Important!**
+
+    QLabel *pauseLabel = new QLabel("Pause", pausecontainer);
+    pauseLabel->setStyleSheet("color: white; font-size: 24px;"
+                              "border:none;");
+    pauseLabel->setMaximumHeight(30);
+    pauseLabel->setAlignment(Qt::AlignCenter);
+
+    // Setup volume elements in a horizontal layout
+    QHBoxLayout *volumelayout=new QHBoxLayout(pausecontainer);
+    volumetxt=new QLabel("Volume:");
+    volumetxt->setStyleSheet("border:none;"
+                             "font: 9pt '8514oem';");
+    // Volume Slider
+    volumeSlider = new QSlider(Qt::Horizontal, this);
+    volumeSlider->setRange(0, 100);
+    volumeSlider->setValue(50);  // Default volume
+    volumeSlider->setStyleSheet("QSlider::groove:horizontal { background: gray; height: 6px; }"
+                                "QSlider::handle:horizontal { background: white; width: 14px; border-radius: 7px; }");
+
+    connect(volumeSlider, &QSlider::valueChanged, this, &MainWindow::updateVolume);
+    volumelayout->addWidget(volumetxt);
+    volumelayout->addWidget(volumeSlider);
+
+    // Buttons
+    QPushButton *resumeBtn = new QPushButton(pausecontainer);
+    setupButton(resumeBtn, "play-button.png");
+    resumeBtn->setCursor(Qt::PointingHandCursor);
+    connect(resumeBtn, &QPushButton::clicked, this, &MainWindow::onResumeclicked);
+
+    QPushButton *restartBtn = new QPushButton(pausecontainer);
+    setupButton(restartBtn, "reload.png");
+    restartBtn->setCursor(Qt::PointingHandCursor);
+    connect(restartBtn,&QPushButton::clicked,this,&MainWindow::on_restartBtn_clicked);
+
+    QPushButton *settings = new QPushButton(pausecontainer);
+    setupButton(settings, "settings.png");
+    settings->setCursor(Qt::PointingHandCursor);
+    connect(settings,&QPushButton::clicked,this,&MainWindow::on_settingsBtn_clicked);
+
+    // ✅ Add buttons in a horizontal layout
+    QHBoxLayout *buttonslayout = new QHBoxLayout();
+    buttonslayout->addWidget(settings);
+    buttonslayout->addWidget(resumeBtn);
+    buttonslayout->addWidget(restartBtn);
+    buttonslayout->setSpacing(40);
+
+    // ✅ Add everything to the vertical layout
+    overlayLayout->addWidget(pauseLabel);
+    overlayLayout->addLayout(volumelayout);
+    overlayLayout->addLayout(buttonslayout);
+}
+
+void MainWindow::updateVolume(int value) {
+    volumetxt->setText(QString("Volume: %1%").arg(value));
+    // If using QMediaPlayer for sound
+    // mediaPlayer->setVolume(value);
+}
+
+void MainWindow::onPauseClicked(){
+    if(ispaused){
+        timer->startTimer();
+    }else{
+        timer->stopTimer();
+        pausewindow();
+    }
+    ispaused=!ispaused;
+}
+void MainWindow::onResumeclicked(){
+    pauseOverlay->hide();
+    timer->startTimer();
+}
+void MainWindow::on_restartBtn_clicked(){
+    timer->setTimeRemaining(10);
+    pauseOverlay->hide();
 }

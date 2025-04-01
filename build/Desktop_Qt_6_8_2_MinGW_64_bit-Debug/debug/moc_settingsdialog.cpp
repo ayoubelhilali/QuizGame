@@ -6,7 +6,7 @@
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
 
-#include "../../../settingsdialog.h"
+#include "../../../headers/settingsdialog.h"
 #include <QtGui/qtextcursor.h>
 #include <QtCore/qmetatype.h>
 

@@ -5,9 +5,11 @@ release/main.o
 release/mainwindow.o
 release/questionsgenerator.o
 release/settingsdialog.o
+release/typingeffect.o
 release/qrc_resources.o
 release/moc_answerbox.o
 release/moc_circletimer.o
 release/moc_hovereffect.o
 release/moc_mainwindow.o
 release/moc_settingsdialog.o
+release/moc_typingeffect.o

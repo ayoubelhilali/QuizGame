@@ -10,7 +10,10 @@
 #include <QLabel>
 #include <memory>
 #include <QHBoxLayout>
+#include <QSlider>
+
 #include "answerbox.h"
+#include "circletimer.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -37,17 +40,22 @@ public:
     void adjustDomainLayout(QHBoxLayout *firstRowLayout, QHBoxLayout *secondRowLayout, QPushButton *buttons[]);
     void onAnswerBoxClicked(AnswerBox *box);
     void onBackButtonClicked();
+    void onPauseClicked();
+    void onResumeclicked();
+    void on_restartBtn_clicked();
     QString generateQuestion(QString domain);
     QProgressBar *createProgressBar();
     QLabel *createLabel(const QString &text, int fontSize, Qt::Alignment alignment);
     QPushButton *createDomainButton(const QString &iconName);
     template <typename T>
     void clearWidgets();
+    void pausewindow();
 
 private slots:
     void on_startBtn_clicked();
     void on_settingsBtn_clicked();
     void onDomainButtonClicked();
+    void updateVolume(int value) ;
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -55,6 +63,15 @@ protected:
 
 private:
     std::unique_ptr<Ui::MainWindow> ui;
+    QPushButton *pauseBtn = nullptr;
+    CircleTimer *timer=nullptr;
+    bool ispaused;
+    QWidget *pauseOverlay;
+    QWidget *pausewidget;
+    QVBoxLayout *pauselayout;
+    QLabel *volumetxt;
+    QSlider *volumeSlider;
+    QString domain;
 };
 
 #endif // MAINWINDOW_H

@@ -18,6 +18,7 @@ SOURCES += \
     src/mainwindow.cpp \
     src/questionsgenerator.cpp \
     src/settingsdialog.cpp \
+    src/typingeffect.cpp \
 
 HEADERS += \
     headers/answerbox.h \
@@ -26,6 +27,7 @@ HEADERS += \
     headers/mainwindow.h \
     headers/questionsgenerator.h \
     headers/settingsdialog.h \
+    headers/typingeffect.h \
 
 FORMS += \
     mainwindow.ui \
