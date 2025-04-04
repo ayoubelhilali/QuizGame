@@ -526,12 +526,36 @@ void MainWindow::pausewindow(){
     volumetxt=new QLabel("Volume:");
     volumetxt->setStyleSheet("border:none;"
                              "font: 9pt '8514oem';");
-    // Volume Slider
     volumeSlider = new QSlider(Qt::Horizontal, this);
     volumeSlider->setRange(0, 100);
     volumeSlider->setValue(50);  // Default volume
-    volumeSlider->setStyleSheet("QSlider::groove:horizontal { background: gray; height: 6px; }"
-                                "QSlider::handle:horizontal { background: white; width: 14px; border-radius: 7px; }");
+    volumeSlider->setStyleSheet(
+        "QSlider::groove:horizontal {"
+        "    border: 1px solid #999999;"
+        "    height: 8px;"
+        "    background: #e0e0e0;"
+        "    border-radius: 4px;"
+        "}"
+        "QSlider::sub-page:horizontal {"
+        "    background: #4CAF50;"  // ✅ Volume progress color (green)
+        "    border-radius: 4px;"
+        "}"
+        "QSlider::add-page:horizontal {"
+        "    background: #bfbfbf;"  // ➕ Remaining slider track
+        "    border-radius: 4px;"
+        "}"
+        "QSlider::handle:horizontal {"
+        "    background: white;"
+        "    border: 1px solid #5c5c5c;"
+        "    width: 16px;"
+        "    margin: -5px 0;"  // Center the handle vertically
+        "    border-radius: 8px;"
+        "}"
+        "QSlider::handle:horizontal:hover {"
+        "    background: #d6d6d6;"  // ✨ Hover effect
+        "    border: 1px solid #3c3c3c;"
+        "}"
+        );
 
     connect(volumeSlider, &QSlider::valueChanged, this, &MainWindow::updateVolume);
     volumelayout->addWidget(volumetxt);
