@@ -14,6 +14,9 @@
 
 #include "answerbox.h"
 #include "circletimer.h"
+#include "geminiai.h"
+#include "typingeffect.h"
+#include "settingsdialog.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -35,7 +38,7 @@ public:
     void applyShadowEffect(QWidget *widget, int blurRadius, const QColor &color);
     void deleteButtons(const std::initializer_list<QPushButton *> &buttons);
     void replaceCentralWidgetLayout(QLayout *newLayout);
-    void startProgressBar(QProgressBar *progressBar, QLabel *waitLabel);
+    void startProgressBar(QProgressBar *progressBar, QLabel *waitLabel,TypingAnimation *typing);
     void setupButton(QPushButton *button, const QString &iconName);
     void adjustDomainLayout(QHBoxLayout *firstRowLayout, QHBoxLayout *secondRowLayout, QPushButton *buttons[]);
     void onAnswerBoxClicked(AnswerBox *box);
@@ -66,12 +69,13 @@ private:
     QPushButton *pauseBtn = nullptr;
     CircleTimer *timer=nullptr;
     bool ispaused;
-    QWidget *pauseOverlay;
-    QWidget *pausewidget;
-    QVBoxLayout *pauselayout;
-    QLabel *volumetxt;
-    QSlider *volumeSlider;
+    QWidget *pauseOverlay=nullptr;
+    QWidget *pausewidget=nullptr;
+    QVBoxLayout *pauselayout=nullptr;
+    QLabel *volumetxt=nullptr;
+    QSlider *volumeSlider=nullptr;
     QString domain;
+    GeminiAI *geminiAI;
+    SettingsDialog *settingsDialog;
 };
-
 #endif // MAINWINDOW_H

@@ -23,6 +23,9 @@ public:
         label->setText(""); // Reset the text
         typingTimer->start(typingSpeed);
     }
+    void stop(){
+        typingTimer->stop();
+    }
 
 private slots:
     void updateText() {

@@ -20,14 +20,14 @@
 
 namespace
 {
-    const int MIN_WIDTH = 900;
-    const int MIN_HEIGHT = 600;
-    const QColor SHADOW_COLOR(0, 194, 203);
-    const int SHADOW_BLUR_RADIUS = 50;
-    const int BUTTON_SHADOW_BLUR_RADIUS = 10;
-    const int BUTTON_ICON_SIZE = 30;
-    const QString BUTTON_STYLE = "background-color:transparent; border: 2px solid white; font-size:27; border-radius:5px";
-    const QString ICON_PATH = ":/Icons/";
+const int MIN_WIDTH = 900;
+const int MIN_HEIGHT = 600;
+const QColor SHADOW_COLOR(0, 194, 203);
+const int SHADOW_BLUR_RADIUS = 50;
+const int BUTTON_SHADOW_BLUR_RADIUS = 10;
+const int BUTTON_ICON_SIZE = 30;
+const QString BUTTON_STYLE = "background-color:transparent; border: 2px solid white; font-size:27; border-radius:5px";
+const QString ICON_PATH = ":/Icons/";
 }
 
 MainWindow::MainWindow(QWidget *parent)
@@ -124,7 +124,7 @@ void MainWindow::on_startBtn_clicked()
     replaceCentralWidgetLayout(waitLayout);
     waitWidget->show();
 
-    startProgressBar(progressBar, waitLabel);
+    startProgressBar(progressBar, waitLabel,typingEffect);
 }
 
 void MainWindow::deleteButtons(const std::initializer_list<QPushButton *> &buttons)
@@ -178,7 +178,7 @@ void MainWindow::replaceCentralWidgetLayout(QLayout *newLayout)
     centralWidget->setLayout(newLayout);
 }
 
-void MainWindow::startProgressBar(QProgressBar *progressBar, QLabel *waitLabel)
+void MainWindow::startProgressBar(QProgressBar *progressBar, QLabel *waitLabel,TypingAnimation *typingeffect)
 {
     auto timer = new QTimer(this);
     int duration = 1000; // Total duration in milliseconds
@@ -193,6 +193,7 @@ void MainWindow::startProgressBar(QProgressBar *progressBar, QLabel *waitLabel)
             progressBar->setValue(progress);
         } else {
             timer->stop();
+            typingeffect->stop();
             ui->label->hide();
             waitLabel->hide();
             progressBar->hide();
@@ -340,7 +341,7 @@ void MainWindow::questionsPage(const QString &domain)
 
     auto scoreTxt = createLabel("Score: ", 10, Qt::AlignRight);
     scoreTxt->setStyleSheet("color:yellow;"
-                                 "font: 15pt 'Terminal';");
+                            "font: 15pt 'Terminal';");
     auto score = createLabel("100", 10, Qt::AlignRight);
     score->setStyleSheet("font: 12pt 'Terminal';");
 

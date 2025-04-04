@@ -1,5 +1,6 @@
 QT       += core gui
-QT       += network
+QT += network
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
@@ -11,6 +12,7 @@ TARGET = QuizApp.pro
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    src/geminiai.cpp \
     src/answerbox.cpp \
     src/circletimer.cpp \
     src/hovereffect.cpp \
@@ -18,9 +20,10 @@ SOURCES += \
     src/mainwindow.cpp \
     src/questionsgenerator.cpp \
     src/settingsdialog.cpp \
-    src/typingeffect.cpp \
+    src/typingeffect.cpp
 
 HEADERS += \
+    headers/geminiai.h \
     headers/answerbox.h \
     headers/circletimer.h \
     headers/hovereffect.h \
