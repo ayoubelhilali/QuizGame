@@ -85,6 +85,18 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     if (pauseBtn) {  // Check if button exists
         pauseBtn->move(this->width()/13, this->height()/13);  // Keep it at top-left
     }
+    if(pauseOverlay){
+        pauseOverlay->setGeometry(0,0,this->width(),this->height());
+    }
+    if(pausecontainer){
+        pausecontainer->setGeometry(width() / 4,height() / 4, width() / 2, height() / 2);
+    }
+    if(exitBtn && pausecontainer){
+        exitBtn->setGeometry(pausecontainer->width()/17,pausecontainer->height()/13,BUTTON_ICON_SIZE+10,BUTTON_ICON_SIZE+10);
+    }
+    if(infoBtn && pausecontainer){
+        infoBtn->setGeometry(pausecontainer->width()-pausecontainer->width()/8,pausecontainer->height()/13,BUTTON_ICON_SIZE+10,BUTTON_ICON_SIZE+10);
+    }
 }
 
 void MainWindow::paintEvent(QPaintEvent *)
@@ -102,8 +114,8 @@ void MainWindow::on_startBtn_clicked()
 {
     deleteButtons({ui->startBtn, ui->statsBtn, ui->infoBtn, ui->settingsBtn});
 
-    auto waitLabel = createLabel("Please wait ...", 20, Qt::AlignCenter);
-    TypingAnimation *typingEffect = new TypingAnimation(waitLabel, 30); // Speed: 50ms per character
+    auto waitLabel = createLabel("Please wait", 20, Qt::AlignCenter);
+    TypingAnimation *typingEffect = new TypingAnimation(waitLabel,waitLabel->text(), 200,this);
     typingEffect->start();
 
     auto progressBar = createProgressBar();
@@ -473,6 +485,8 @@ void MainWindow::on_settingsBtn_clicked()
 
 void MainWindow::onBackButtonClicked()
 {
+    // clear window
+    pauseOverlay->hide();
     // Recreate the home page layout
     ui->setupUi(this);
     setMinimumSize(MIN_WIDTH, MIN_HEIGHT);
@@ -504,20 +518,40 @@ void MainWindow::pausewindow(){
     pauseOverlay->setGeometry(0, 0, width(), height());
     pauseOverlay->show(); // Show overlay
 
+
     // Container for pause menu
-    QWidget *pausecontainer = new QWidget(pauseOverlay);
+    pausecontainer = new QWidget(pauseOverlay);
     pausecontainer->setGeometry(width() / 4, height() / 4, width() / 2, height() / 2);
     pausecontainer->setStyleSheet("background-color: rgba(0, 0, 0, 0.4);"
                                   "border:1px solid white;"
                                   "border-radius:10px;");
     pausecontainer->show();
-    // ✅ Set Layout Correctly
+    //
     QVBoxLayout *overlayLayout = new QVBoxLayout(pausecontainer);
     pausecontainer->setLayout(overlayLayout); // **Important!**
 
+    // exit btn
+    exitBtn=new QPushButton(pausecontainer);
+    exitBtn->setIcon(QIcon(ICON_PATH + "exit.png"));
+    exitBtn->setStyleSheet(BUTTON_STYLE);
+    exitBtn->setIconSize(QSize(BUTTON_ICON_SIZE, BUTTON_ICON_SIZE));
+    exitBtn->setGeometry(pausecontainer->width()/17,pausecontainer->height()/13,BUTTON_ICON_SIZE+10,BUTTON_ICON_SIZE+10);
+    exitBtn->setCursor(Qt::PointingHandCursor);
+    connect(exitBtn,&QPushButton::clicked,this,&MainWindow::onBackButtonClicked);
+    exitBtn->show();
+
+    // info btn
+    infoBtn=new QPushButton(pausecontainer);
+    infoBtn->setIcon(QIcon(ICON_PATH + "information.png"));
+    infoBtn->setStyleSheet(BUTTON_STYLE);
+    infoBtn->setIconSize(QSize(BUTTON_ICON_SIZE-10, BUTTON_ICON_SIZE-10));
+    infoBtn->setGeometry(pausecontainer->width()-pausecontainer->width()/8,pausecontainer->height()/13,BUTTON_ICON_SIZE+10,BUTTON_ICON_SIZE+10);
+    infoBtn->setCursor(Qt::PointingHandCursor);
+    infoBtn->show();
+
     QLabel *pauseLabel = new QLabel("Pause", pausecontainer);
     pauseLabel->setStyleSheet("color: white; font-size: 24px;"
-                              "border:none;");
+                              "border-color:transparent;");
     pauseLabel->setMaximumHeight(30);
     pauseLabel->setAlignment(Qt::AlignCenter);
 
@@ -529,6 +563,7 @@ void MainWindow::pausewindow(){
     volumeSlider = new QSlider(Qt::Horizontal, this);
     volumeSlider->setRange(0, 100);
     volumeSlider->setValue(50);  // Default volume
+    volumeSlider->setCursor(Qt::PointingHandCursor);
     volumeSlider->setStyleSheet(
         "QSlider::groove:horizontal {"
         "    border: 1px solid #999999;"
@@ -541,7 +576,7 @@ void MainWindow::pausewindow(){
         "    border-radius: 4px;"
         "}"
         "QSlider::add-page:horizontal {"
-        "    background: #bfbfbf;"  // ➕ Remaining slider track
+        "    background: transparent;"  //r  ➕ Remaining slider track
         "    border-radius: 4px;"
         "}"
         "QSlider::handle:horizontal {"

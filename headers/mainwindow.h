@@ -67,10 +67,13 @@ protected:
 private:
     std::unique_ptr<Ui::MainWindow> ui;
     QPushButton *pauseBtn = nullptr;
+    QPushButton *exitBtn=nullptr;
+    QPushButton *infoBtn=nullptr;
     CircleTimer *timer=nullptr;
     bool ispaused;
     QWidget *pauseOverlay=nullptr;
     QWidget *pausewidget=nullptr;
+    QWidget *pausecontainer=nullptr;
     QVBoxLayout *pauselayout=nullptr;
     QLabel *volumetxt=nullptr;
     QSlider *volumeSlider=nullptr;

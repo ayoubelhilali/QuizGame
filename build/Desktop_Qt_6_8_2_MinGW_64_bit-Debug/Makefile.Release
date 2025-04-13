@@ -151,6 +151,7 @@ release/qrc_resources.cpp: ../../resources.qrc \
 		../../Icons/stats-icon.svg \
 		../../Icons/checked.png \
 		../../Icons/tech.svg \
+		../../Icons/exit.png \
 		../../Icons/settings.svg \
 		../../Icons/answer.svg \
 		../../Icons/info.svg \
@@ -163,6 +164,7 @@ release/qrc_resources.cpp: ../../resources.qrc \
 		../../Icons/stats-icon.svg \
 		../../Icons/question.svg \
 		../../Icons/checked.png \
+		../../Icons/information.png \
 		../../Icons/general.svg
 	C:\Qt\6.8.2\mingw_64\bin\rcc.exe -name resources --no-zstd ..\..\resources.qrc -o release\qrc_resources.cpp
 
@@ -1149,6 +1151,60 @@ release/moc_mainwindow.cpp: ../../headers/mainwindow.h \
 		../../headers/answerbox.h \
 		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QWidget \
 		../../headers/circletimer.h \
+		../../headers/geminiai.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QNetworkAccessManager \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qnetworkaccessmanager.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qtnetworkglobal.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qtnetwork-config.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qtnetworkexports.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qnetworkrequest.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qhttpheaders.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QSharedDataPointer \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QString \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QUrl \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QVariant \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/q26numeric.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QSslConfiguration \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslconfiguration.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslsocket.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qtcpsocket.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qabstractsocket.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qhostaddress.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslerror.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslcertificate.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/qcryptographichash.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/qdatetime.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/qcalendar.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qssl.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QFlags \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QSslPreSharedKeyAuthenticator \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslpresharedkeyauthenticator.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QMetaType \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QNetworkReply \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qnetworkreply.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QIODevice \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QNetworkRequest \
+		../../headers/typingeffect.h \
+		../../headers/settingsdialog.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QDialog \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qdialog.h \
+		../../ui_SettingsDialog.h \
+		C:/Qt/6.8.2/mingw_64/include/QtGui/QIcon \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QApplication \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qapplication.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QCheckBox \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qcheckbox.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QComboBox \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qcombobox.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qabstractitemdelegate.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qstyleoption.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qabstractspinbox.h \
+		C:/Qt/6.8.2/mingw_64/include/QtGui/qvalidator.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/qregularexpression.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qstyle.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qtabbar.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qrubberband.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/qabstractitemmodel.h \
 		release/moc_predefs.h \
 		C:/Qt/6.8.2/mingw_64/bin/moc.exe
 	C:\Qt\6.8.2\mingw_64\bin\moc.exe $(DEFINES) --include C:/Users/HP/Documents/QuizApp/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/release/moc_predefs.h -IC:/Qt/6.8.2/mingw_64/mkspecs/win32-g++ -IC:/Users/HP/Documents/QuizApp -IC:/Qt/6.8.2/mingw_64/include -IC:/Qt/6.8.2/mingw_64/include/QtWidgets -IC:/Qt/6.8.2/mingw_64/include/QtGui -IC:/Qt/6.8.2/mingw_64/include/QtNetwork -IC:/Qt/6.8.2/mingw_64/include/QtCore -I. -IC:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++ -IC:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32 -IC:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward -IC:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include -IC:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed -IC:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include ..\..\headers\mainwindow.h -o release\moc_mainwindow.cpp
@@ -2189,6 +2245,60 @@ release/circletimer.o: ../../src/circletimer.cpp ../../headers/circletimer.h \
 		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QSlider \
 		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qslider.h \
 		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qabstractslider.h \
+		../../headers/geminiai.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QNetworkAccessManager \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qnetworkaccessmanager.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qtnetworkglobal.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qtnetwork-config.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qtnetworkexports.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qnetworkrequest.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qhttpheaders.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QSharedDataPointer \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QString \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QUrl \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QVariant \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/q26numeric.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QSslConfiguration \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslconfiguration.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslsocket.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qtcpsocket.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qabstractsocket.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qhostaddress.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslerror.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslcertificate.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/qcryptographichash.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/qdatetime.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/qcalendar.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qssl.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QFlags \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QSslPreSharedKeyAuthenticator \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslpresharedkeyauthenticator.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QMetaType \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QNetworkReply \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qnetworkreply.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QIODevice \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QNetworkRequest \
+		../../headers/typingeffect.h \
+		../../headers/settingsdialog.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QDialog \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qdialog.h \
+		../../ui_SettingsDialog.h \
+		C:/Qt/6.8.2/mingw_64/include/QtGui/QIcon \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QApplication \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qapplication.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QCheckBox \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qcheckbox.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QComboBox \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qcombobox.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qabstractitemdelegate.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qstyleoption.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qabstractspinbox.h \
+		C:/Qt/6.8.2/mingw_64/include/QtGui/qvalidator.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/qregularexpression.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qstyle.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qtabbar.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qrubberband.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/qabstractitemmodel.h \
 		C:/Qt/6.8.2/mingw_64/include/QtGui/QPainter \
 		C:/Qt/6.8.2/mingw_64/include/QtGui/qpainter.h \
 		C:/Qt/6.8.2/mingw_64/include/QtGui/qtextoption.h \
@@ -2615,8 +2725,60 @@ release/main.o: ../../src/main.cpp ../../headers/mainwindow.h \
 		../../headers/answerbox.h \
 		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QWidget \
 		../../headers/circletimer.h \
+		../../headers/geminiai.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QNetworkAccessManager \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qnetworkaccessmanager.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qtnetworkglobal.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qtnetwork-config.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qtnetworkexports.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qnetworkrequest.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qhttpheaders.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QSharedDataPointer \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QString \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QUrl \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QVariant \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/q26numeric.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QSslConfiguration \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslconfiguration.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslsocket.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qtcpsocket.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qabstractsocket.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qhostaddress.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslerror.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslcertificate.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/qcryptographichash.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/qdatetime.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/qcalendar.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qssl.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QFlags \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QSslPreSharedKeyAuthenticator \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslpresharedkeyauthenticator.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QMetaType \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QNetworkReply \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qnetworkreply.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QIODevice \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QNetworkRequest \
+		../../headers/typingeffect.h \
+		../../headers/settingsdialog.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QDialog \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qdialog.h \
+		../../ui_SettingsDialog.h \
+		C:/Qt/6.8.2/mingw_64/include/QtGui/QIcon \
 		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QApplication \
-		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qapplication.h
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qapplication.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QCheckBox \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qcheckbox.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QComboBox \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qcombobox.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qabstractitemdelegate.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qstyleoption.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qabstractspinbox.h \
+		C:/Qt/6.8.2/mingw_64/include/QtGui/qvalidator.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/qregularexpression.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qstyle.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qtabbar.h \
+		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qrubberband.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/qabstractitemmodel.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o release\main.o ..\..\src\main.cpp
 
 release/mainwindow.o: ../../src/mainwindow.cpp C:/Qt/6.8.2/mingw_64/include/QtCore/QTimer \
@@ -2852,10 +3014,43 @@ release/mainwindow.o: ../../src/mainwindow.cpp C:/Qt/6.8.2/mingw_64/include/QtCo
 		../../headers/answerbox.h \
 		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QWidget \
 		../../headers/circletimer.h \
+		../../headers/geminiai.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QNetworkAccessManager \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qnetworkaccessmanager.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qtnetworkglobal.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qtnetwork-config.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qtnetworkexports.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qnetworkrequest.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qhttpheaders.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QSharedDataPointer \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QString \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QUrl \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QVariant \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/q26numeric.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QSslConfiguration \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslconfiguration.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslsocket.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qtcpsocket.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qabstractsocket.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qhostaddress.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslerror.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslcertificate.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/qcryptographichash.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/qdatetime.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/qcalendar.h \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qssl.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QFlags \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QSslPreSharedKeyAuthenticator \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qsslpresharedkeyauthenticator.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QMetaType \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QNetworkReply \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/qnetworkreply.h \
+		C:/Qt/6.8.2/mingw_64/include/QtCore/QIODevice \
+		C:/Qt/6.8.2/mingw_64/include/QtNetwork/QNetworkRequest \
+		../../headers/typingeffect.h \
 		../../headers/settingsdialog.h \
 		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QDialog \
 		../../ui_SettingsDialog.h \
-		C:/Qt/6.8.2/mingw_64/include/QtCore/QVariant \
 		C:/Qt/6.8.2/mingw_64/include/QtGui/QIcon \
 		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QApplication \
 		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qapplication.h \
@@ -2876,8 +3071,7 @@ release/mainwindow.o: ../../src/mainwindow.cpp C:/Qt/6.8.2/mingw_64/include/QtCo
 		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QSpacerItem \
 		C:/Qt/6.8.2/mingw_64/include/QtWidgets/QStatusBar \
 		C:/Qt/6.8.2/mingw_64/include/QtWidgets/qstatusbar.h \
-		../../headers/hovereffect.h \
-		../../headers/typingeffect.h
+		../../headers/hovereffect.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o release\mainwindow.o ..\..\src\mainwindow.cpp
 
 release/questionsgenerator.o: ../../src/questionsgenerator.cpp ../../headers/questionsgenerator.h

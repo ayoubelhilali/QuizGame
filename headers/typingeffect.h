@@ -8,43 +8,36 @@ class TypingAnimation : public QObject {
     Q_OBJECT
 
 public:
-    TypingAnimation(QLabel *label, int speed = 100, QObject *parent = nullptr)
-        : QObject(parent), label(label), typingSpeed(speed), currentIndex(0) {
-
-        originalText = label->text(); // Store the original text
-        label->setText(""); // Clear the label initially
+    TypingAnimation(QLabel *label, const QString& baseText = "Please wait", int speed = 500, QObject *parent = nullptr)
+        : QObject(parent), label(label), baseText(baseText), typingSpeed(speed), dotCount(0) {
 
         typingTimer = new QTimer(this);
         connect(typingTimer, &QTimer::timeout, this, &TypingAnimation::updateText);
     }
 
     void start() {
-        currentIndex = 0;
-        label->setText(""); // Reset the text
+        dotCount = 0;
         typingTimer->start(typingSpeed);
     }
-    void stop(){
+
+    void stop() {
         typingTimer->stop();
+        label->setText(baseText); // Reset to base text
     }
 
 private slots:
     void updateText() {
-        if (currentIndex < originalText.length()) {
-            label->setText(originalText.left(currentIndex + 1));
-            currentIndex++;
-        } else {
-            currentIndex = 0;  // Reset index
-            label->setText(""); // Clear text for the next loop
-        }
+        dotCount = (dotCount + 1) % 4; // 0 to 3 dots
+        QString dots(dotCount, '.');
+        label->setText(baseText + dots);
     }
 
 private:
     QLabel *label;
-    QString originalText;
+    QString baseText;
     int typingSpeed;
-    int currentIndex;
+    int dotCount;
     QTimer *typingTimer;
 };
-
 
 #endif // TYPINGEFFECT_H

@@ -6,12 +6,12 @@
 #include <QDebug>
 
 GeminiAI::GeminiAI(QObject *parent) : QObject(parent) {
-    apiKey = "AIzaSyD4MYY-Rko_93YRTeVFtuMOVF5KARm_q-0";  // Replace with your actual API key
+    apiKey = "API key";  // Replace with your actual API key
     connect(&networkManager, &QNetworkAccessManager::finished, this, &GeminiAI::handleNetworkReply);
 }
 
 void GeminiAI::askQuestion(const QString &question) {
-    QUrl url("https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateText?key=" + apiKey);
+    QUrl url("API key" + apiKey);
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
