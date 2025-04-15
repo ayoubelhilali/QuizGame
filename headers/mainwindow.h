@@ -57,6 +57,7 @@ public:
 private slots:
     void on_startBtn_clicked();
     void on_settingsBtn_clicked();
+    void on_infoBtn_clicked();
     void onDomainButtonClicked();
     void updateVolume(int value) ;
 

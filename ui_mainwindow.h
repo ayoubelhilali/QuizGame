@@ -123,10 +123,10 @@ public:
         label->setFont(font3);
         label->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
         label->setStyleSheet(QString::fromUtf8("font-size: 50px;\n"
-"font-weight: bold;\n"
-"font: 48pt \"Stencil\";\n"
-"color: white;\n"
-""));
+            "font-weight: bold;\n"
+            "font: 48pt \"Stencil\";\n"
+            "color: white;\n"
+        ));
 
         gridLayout->addWidget(label, 0, 0, 1, 3, Qt::AlignmentFlag::AlignHCenter|Qt::AlignmentFlag::AlignVCenter);
 
@@ -157,7 +157,10 @@ public:
 };
 
 namespace Ui {
-    class MainWindow: public Ui_MainWindow {};
+class MainWindow: public Ui_MainWindow {private slots:
+
+    void on_statsBtn_clicked();
+};
 } // namespace Ui
 
 QT_END_NAMESPACE
