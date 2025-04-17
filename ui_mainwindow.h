@@ -160,6 +160,7 @@ namespace Ui {
 class MainWindow: public Ui_MainWindow {private slots:
 
     void on_statsBtn_clicked();
+    void on_infoBtn_clicked();
 };
 } // namespace Ui
 

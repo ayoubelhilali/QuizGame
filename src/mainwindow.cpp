@@ -55,6 +55,16 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     resize(MIN_WIDTH, MIN_HEIGHT);
+
+    // Initialize pauseOverlay and pausecontainer to nullptr
+    pauseOverlay = nullptr;
+    pausecontainer = nullptr;
+    exitBtn = nullptr;
+    infoBtn = nullptr;
+    volumetxt = nullptr;
+    volumeSlider = nullptr;
+    pauseBtn = nullptr;
+    timer = nullptr;
 }
 
 void MainWindow::applyShadowEffect(QWidget *widget, int blurRadius, const QColor &color)
@@ -110,6 +120,16 @@ void MainWindow::paintEvent(QPaintEvent *)
 
 MainWindow::~MainWindow()
 {
+    // Correctly delete dynamically allocated objects in the destructor
+    if (pauseOverlay) delete pauseOverlay;
+    if (pausecontainer) delete pausecontainer;
+    if (exitBtn) delete exitBtn;
+    if (infoBtn) delete infoBtn;
+    if (volumetxt) delete volumetxt;
+    if (volumeSlider) delete volumeSlider;
+    if (pauseBtn) delete pauseBtn;
+    if(timer) delete timer;
+
 }
 
 void MainWindow::on_startBtn_clicked()
@@ -187,7 +207,18 @@ void MainWindow::replaceCentralWidgetLayout(QLayout *newLayout)
     QWidget *centralWidget = this->centralWidget();
     if (centralWidget && centralWidget->layout())
     {
-        delete centralWidget->layout();
+        QLayout *oldLayout = centralWidget->layout();
+        QLayoutItem *child;
+        while ((child = oldLayout->takeAt(0)) != nullptr)
+        {
+            if (child->widget())
+            {
+                child->widget()->setParent(nullptr); // Detach widget from layout
+            }
+            delete child; // Delete the layout item
+        }
+
+        delete oldLayout; // Delete the old layout
     }
     centralWidget->setLayout(newLayout);
 }
@@ -426,6 +457,10 @@ void MainWindow::onDomainButtonClicked()
 {
     clearWidgets<QPushButton>();
     clearWidgets<QLabel>();
+    if(pauseBtn)
+        delete pauseBtn;
+    if(timer)
+        delete timer;
 
     QPushButton *clickedButton = qobject_cast<QPushButton *>(sender());
     if (!clickedButton)
@@ -482,98 +517,19 @@ void MainWindow::on_settingsBtn_clicked()
     SettingsDialog settingsDialog(this);
     settingsDialog.exec();
 }
-void MainWindow::on_infoBtn_clicked(){
-    //clear window:
-    ui->container->hide();
 
 
-   // Contenu des instructions
-    QString instructions =
-        "<h2><b>Instructions for QuizGame</b></h2>"
-        "<h3 style='color:#2E86C1;'>Basic Game Setup</h3>"
-        "<ul>"
-        "<li>Click on the <b>Start Game</b> button on the home screen</li>"
-        "<li>Choose your <b>quiz Domain</b></li>"
-        "<li>Select difficulty level (<b>Easy</b>, <b>Medium</b>, <b>Hard</b>)</li>"
-        "</ul>"
 
-        "<h3 style='color:#28B463;'>Gameplay Instructions</h3>"
-        "<b>1 - Quiz Flow</b><br>"
-        "<ul>"
-        "<li>Each question will appear one at a time</li>"
-        "<li>Read the question carefully</li>"
-        "<li>Select your answer from the multiple-choice options</li>"
-        "<li><i>A timer may count down for each question</i></li>"
-        "</ul>"
+void MainWindow::on_infoBtn_clicked()
+{
+    deleteButtons({ui->startBtn, ui->statsBtn, ui->infoBtn, ui->settingsBtn});
+    ui->label->deleteLater();
 
-        "<b>2 - Scoring System</b><br>"
-        "<ul>"
-        "<li><span style='color:green;'>Correct answers: +10 points</span></li>"
-        "<li>Incorrect answers: 0 points</li>"
-        "<li><span style='color:orange;'>Time bonus: +5 points</span> for answering within 5 seconds</li>"
-        "<li><span style='color:#9B59B6;'>Streak bonus: +2 points</span> for each consecutive correct answer</li>"
-        "</ul>"
-
-        "<b>3 - Power-ups and Helps</b><br>"
-        "<ul>"
-        "<li><b>$ 50/50</b>: Eliminates two incorrect answers</li>"
-        "<li><b>$ Time Freeze</b>: Pauses the timer for 10 seconds</li>"
-        "<li><b>$ Hint</b>: Provides a clue about the correct answer</li>"
-        "<li><b>$ Skip</b>: Skip the current question without penalty</li>"
-        "<li><i>Each help option can only be used once per game</i></li>"
-        "</ul>"
-
-        "<h3 style='color:#CA6F1E;'>End of Game</h3>"
-        "<ul>"
-        "<li>View your final score</li>"
-        "<li>See correct answers for missed questions</li>"
-        "<li><b>Play Again</b>: Start a new game with the same settings</li>"
-        "<li><b>Return to Main Menu</b>: Exit to the home screen</li>"
-        "</ul>"
-
-        "<h3 style='color:#5D6D7E;'>Settings Options</h3>"
-        "<ul>"
-        "<li>Toggle sound effects and background music</li>"
-        "<li>Adjust difficulty level</li>"
-        "</ul>"
-        "<p>&copy all rights reserved 2025 </p>";
-    // ----------------------------------------------------------------
-    // QLabel with rich text
-    QLabel *label = new QLabel(instructions);
-    label->setWordWrap(true);
-    label->setTextFormat(Qt::RichText);
-    label->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
-    label->setMaximumWidth(500); // Limit width
-    label->setAlignment(Qt::AlignJustify ); // Center text in the label
-
-    // Create a container widget for the label
-    QWidget *container = new QWidget;
-    QVBoxLayout *containerLayout = new QVBoxLayout(container);
-    containerLayout->addWidget(label, 0, Qt::AlignCenter); // Center the label
-
-    // Scroll area setup
-    QScrollArea *scrollArea = new QScrollArea;
-    scrollArea->setWidget(container);
-    scrollArea->setWidgetResizable(true);
-    scrollArea->setMinimumSize(600, 400);
-    scrollArea->setAlignment(Qt::AlignCenter); // Center content in scroll area
-
-    // Create a main layout that centers the scroll area
-    QWidget *mainWidget = new QWidget(this);
-    mainWidget->setStyleSheet("background-color:transparent;");
-    QVBoxLayout *mainLayout = new QVBoxLayout(mainWidget);
-
-    // Add stretch before and after to center vertically
-    mainLayout->addStretch(20);
-    mainLayout->addWidget(scrollArea, 0, Qt::AlignCenter); // Center horizontally
-    mainLayout->addStretch(20);
-
-    // Set the main widget as central widget
-    setCentralWidget(mainWidget);
-
-    // Create back button
-    QPushButton *returnButton = new QPushButton("<    Back", mainWidget);
-    returnButton->setStyleSheet("QPushButton{"
+    QPushButton *backbutton = new QPushButton(this);
+    backbutton->setText(" <    Back");
+    backbutton->setCursor(Qt::PointingHandCursor);
+    backbutton->setMinimumSize(80, 30);
+    backbutton->setStyleSheet("QPushButton{"
                               "background-color:transparent;"
                               "border:1px solid white;"
                               "border-radius: 10px;"
@@ -581,20 +537,203 @@ void MainWindow::on_infoBtn_clicked(){
                               "QPushButton:hover{"
                               "background-color:rgba(255,255,255,0.5);"
                               "}");
+    backbutton->setMinimumWidth(100);
+    connect(backbutton, &QPushButton::clicked, this, &MainWindow::onBackButtonClicked);
 
-    // Position the back button at the bottom center
-    returnButton->setFixedWidth(150);
-    returnButton->move(this->width()/9,this->height()/6);
+    auto infoHead = createLabel("Instructions", 28, Qt::AlignCenter);
+    applyShadowEffect(infoHead, BUTTON_SHADOW_BLUR_RADIUS, SHADOW_COLOR);
 
-    // Connect button to restore the original UI
-    connect(returnButton, &QPushButton::clicked, this, &MainWindow::onBackButtonClicked);
+
+    // Instructions content
+    QString instructions =
+        "<h2><b style='font-size:100px;'>Instructions for QuizGame</b></h2>"
+        "<h3 style='color:yellow;'>Basic Game Setup</h3>"
+        "<ul>"
+        "<li style='text-align:left;'>Click on the <b>Start Game</b> button on the home screen</li>"
+        "<li style='text-align:left;'>Choose your <b>quiz Domain</b></li>"
+        "<li style='text-align:left;'>Select difficulty level (<b>Easy</b>, <b>Medium</b>, <b>Hard</b>)</li>"
+        "</ul>"
+
+        "<h3 style='color:yellow;'>Gameplay Instructions</h3>"
+        "<b>1 - Quiz Flow: </b><br>"
+        "<ul>"
+        "<li style='text-align:left;'>Each question will appear one at a time</li>"
+        "<li style='text-align:left;'>Read the question carefully</li>"
+        "<li style='text-align:left;'>Select your answer from the multiple-choice options</li>"
+        "<li  style='text-align:left;'>A timer may count down for each question</li>"
+        "</ul>"
+
+        "<b>2 - Scoring System:</b><br>"
+        "<ul>"
+        "<li style='text-align:left;'><span style='color:white;'>Correct answers: +10 points</span></li>"
+        "<li style='text-align:left;'>Incorrect answers: 0 points</li>"
+        "<li style='text-align:left;'><span style='color:orange;'>Time bonus: +5 points</span> for answering within 5 seconds</li>"
+        "<li style= 'text-align:left;'><span style='color:#9B59B6;'>Streak bonus: +2 points</span> for each consecutive correct answer</li>"
+        "</ul>"
+
+        "<b>3 - Power-ups and Helps:</b><br>"
+        "<ul>"
+        "<li style='text-align:left;'><b> 50/50</b>: Eliminates two incorrect answers</li>"
+        "<li style='text-align:left;'><b> Time Freeze</b>: Pauses the timer for 10 seconds</li>"
+        "<li style='text-align:left;'><b> Hint</b>: Provides a clue about the correct answer</li>"
+        "<li style='text-align:left;'><b> Skip</b>: Skip the current question without penalty</li>"
+        "<li style='text-align:left;'><i>Each help option can only be used once per game</i></li>"
+        "</ul>"
+
+        "<b>4 - Special Item</b>:<br>"
+        "<ul>"
+        "<li style='text-align:left;'><b>Bomb</b>: After clicking on this icon. A bomb is generated in the answer section.</li>"
+        "<li style='text-align:left;'>The bomb will explode randomly and eliminate one of the wrong answers.</li>"
+        "</ul>"
+
+        "<h3 style='color:#CA6F1E;'>End of Game</h3>"
+        "<ul>"
+        "<li style='text-align:left;'>View your final score</li>"
+        "<li style='text-align:left;'>See correct answers for missed questions</li>"
+        "<li style='text-align:left;'><b>Play Again</b>: Start a new game with the same settings</li>"
+        "<li style='text-align:left;'><b>Return to Main Menu</b>: Exit to the home screen</li>"
+        "</ul>"
+
+        "<h3 style='color:#5D6D7E;'>Settings Options</h3>"
+        "<ul>"
+        "<li style='text-align:left;'>Toggle sound effects and background music</li>"
+        "<li style='text-align:left;'>Adjust difficulty level</li>"
+        "</ul>"
+        "<p>©Ayoub, All rights reserved 2025 </p>";
+
+
+    QLabel *instructionsLabel = new QLabel(instructions);
+    instructionsLabel->setWordWrap(true);
+    instructionsLabel->setTextFormat(Qt::RichText);
+    instructionsLabel->setStyleSheet("font-size: 16px; color: white; background-color: transparent;"); // Transparent background
+    instructionsLabel->setAlignment(Qt::AlignLeft); // Align text to the left
+
+
+    QScrollArea *scrollArea = new QScrollArea;
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setStyleSheet("background-color: transparent; border: none;"); // Transparent ScrollArea
+
+    QWidget *scrollContent = new QWidget();
+    scrollContent->setStyleSheet("background-color: transparent;"); // Transparent content widget
+    QVBoxLayout *scrollLayout = new QVBoxLayout(scrollContent);
+    scrollLayout->addWidget(instructionsLabel);
+    scrollContent->setLayout(scrollLayout);
+    scrollArea->setWidget(scrollContent);
+    scrollLayout->setAlignment(Qt::AlignCenter);
+
+    // -----------------------------------------------------------------------
+
+    auto infoHeadLayout = new QHBoxLayout();
+    infoHeadLayout->addWidget(backbutton, Qt::AlignLeft);
+    infoHeadLayout->addWidget(infoHead, Qt::AlignCenter);
+
+    QWidget *infoheadwid = new QWidget(this);
+    infoheadwid->setLayout(infoHeadLayout);
+    infoheadwid->setMinimumWidth(600);
+
+    //Create Layout
+
+    auto infosLayout = new QVBoxLayout(); // Changed to QVBoxLayout to handle multiple rows
+
+    infosLayout->addWidget(scrollArea);
+
+    auto mainLayout = new QVBoxLayout();
+    replaceCentralWidgetLayout(mainLayout);
+
+    mainLayout->addWidget(infoheadwid,0,Qt::AlignCenter);
+
+    mainLayout->addLayout(infosLayout);
+
+    mainLayout->setContentsMargins(100, 100, 100, 100);
+
+}
+
+void MainWindow::on_statsBtn_clicked(){
+    // Clear the current UI
+    if (ui->container) {
+        ui->container->hide();
+    }
+}
+void MainWindow::setPlayerStats(int highScore=0, int totalGamesPlayed=0, int gamesWon=0,
+                                int averageScore=0, int longestStreak=0, int fastestTime=0,
+                                int totalCorrectAnswers=0, int totalIncorrectAnswers=0) {
+
+    // Create a QLabel to display stats
+    QLabel *statsLabel = new QLabel(this);
+    statsLabel->setAlignment(Qt::AlignTop);
+    statsLabel->setWordWrap(true);  // Allow long text to wrap
+
+    // Prepare the stats text
+    QString statsText =
+        "<h2><b>Your Stats</b></h2>"
+        "<ul>"
+        "<li><b>High Score:</b> " + QString::number(highScore) + "</li>"
+        "<li><b>Total Games Played:</b> " + QString::number(totalGamesPlayed) + "</li>"
+        "<li><b>Games Won:</b> " + QString::number(gamesWon) + "</li>"
+        "<li><b>Average Score:</b> " + QString::number(averageScore) + "</li>"
+        "<li><b>Longest Streak:</b> " + QString::number(longestStreak) + " correct in a row</li>"
+        "<li><b>Fastest Time:</b> " + QString::number(fastestTime) + " minutes</li>"
+        "<li><b>Total Correct Answers:</b> " + QString::number(totalCorrectAnswers) + "</li>"
+        "<li><b>Total Incorrect Answers:</b> " + QString::number(totalIncorrectAnswers) + "</li>"
+        "</ul>";
+    // Update the stats label text with the player's stats
+    statsLabel->setText(statsText);
+    statsLabel->show();
 }
 
 void MainWindow::onBackButtonClicked()
 {
-    // clear window
-    pauseOverlay->hide();
-    pauseBtn->hide();
+    // Clean up the pause window widgets if they exist
+    if (pauseOverlay) {
+        pauseOverlay->deleteLater();
+        pauseOverlay = nullptr;
+    }
+    if (pausecontainer) {
+        pausecontainer->deleteLater();
+        pausecontainer = nullptr;
+    }
+    if (exitBtn) {
+        exitBtn->deleteLater();
+        exitBtn = nullptr;
+    }
+    if (infoBtn) {
+        infoBtn->deleteLater();
+        infoBtn = nullptr;
+    }
+    if (volumetxt) {
+        volumetxt->deleteLater();
+        volumetxt = nullptr;
+    }
+    if (volumeSlider) {
+        volumeSlider->deleteLater();
+        volumeSlider = nullptr;
+    }
+    if(pauseBtn){
+        delete pauseBtn;
+        pauseBtn = nullptr;
+    }
+    if(timer){
+        delete timer;
+        timer=nullptr;
+    }
+
+    // Clear the central widget
+    QWidget *centralWidget = this->centralWidget();
+    QLayout* layout = centralWidget->layout();
+    if(layout) {
+        QLayoutItem* item;
+        while((item = layout->takeAt(0))) {
+            QWidget* widget = item->widget();
+            if(widget) {
+                layout->removeWidget(widget);
+                widget->deleteLater();
+            }
+            delete item;
+        }
+        delete layout;
+    }
+    centralWidget->setLayout(nullptr);
+
     // Recreate the home page layout
     ui->setupUi(this);
     setMinimumSize(MIN_WIDTH, MIN_HEIGHT);
@@ -614,6 +753,7 @@ void MainWindow::onBackButtonClicked()
         applyShadowEffect(button, BUTTON_SHADOW_BLUR_RADIUS, SHADOW_COLOR);
         new HoverEffect(button);
     }
+    resize(width()+1,height());
 }
 
 void MainWindow::pausewindow(){

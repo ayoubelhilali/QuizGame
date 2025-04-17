@@ -46,6 +46,9 @@ public:
     void onPauseClicked();
     void onResumeclicked();
     void on_restartBtn_clicked();
+    void setPlayerStats(int highScore, int totalGamesPlayed, int gamesWon,
+                                    int averageScore, int longestStreak, int fastestTime,
+                        int totalCorrectAnswers, int totalIncorrectAnswers);
     QString generateQuestion(QString domain);
     QProgressBar *createProgressBar();
     QLabel *createLabel(const QString &text, int fontSize, Qt::Alignment alignment);
@@ -58,6 +61,7 @@ private slots:
     void on_startBtn_clicked();
     void on_settingsBtn_clicked();
     void on_infoBtn_clicked();
+    void on_statsBtn_clicked();
     void onDomainButtonClicked();
     void updateVolume(int value) ;
 
