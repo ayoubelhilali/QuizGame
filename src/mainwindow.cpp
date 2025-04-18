@@ -109,6 +109,9 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     if(infoBtn && pausecontainer){
         infoBtn->setGeometry(pausecontainer->width()-pausecontainer->width()/8,pausecontainer->height()/13,BUTTON_ICON_SIZE+10,BUTTON_ICON_SIZE+10);
     }
+    if(backbutton){
+        backbutton->setGeometry(width()/7,height()/6,90,30);
+    }
 }
 
 void MainWindow::paintEvent(QPaintEvent *)
@@ -599,7 +602,7 @@ void MainWindow::on_infoBtn_clicked()
         "<li style='text-align:left;'>Toggle sound effects and background music</li>"
         "<li style='text-align:left;'>Adjust difficulty level</li>"
         "</ul>"
-        "<p>©Ayoub, All rights reserved 2025 </p>";
+        "<p style= 'text-align:center;font-size:15px;'>©Ayoub, All rights reserved 2025 </p><br>";
 
 
     QLabel *instructionsLabel = new QLabel(instructions);
@@ -649,36 +652,70 @@ void MainWindow::on_infoBtn_clicked()
 }
 
 void MainWindow::on_statsBtn_clicked(){
-    // Clear the current UI
-    if (ui->container) {
-        ui->container->hide();
-    }
-}
-void MainWindow::setPlayerStats(int highScore=0, int totalGamesPlayed=0, int gamesWon=0,
-                                int averageScore=0, int longestStreak=0, int fastestTime=0,
-                                int totalCorrectAnswers=0, int totalIncorrectAnswers=0) {
+    deleteButtons({ui->startBtn, ui->statsBtn, ui->infoBtn, ui->settingsBtn});
+    ui->label->deleteLater();
 
-    // Create a QLabel to display stats
-    QLabel *statsLabel = new QLabel(this);
-    statsLabel->setAlignment(Qt::AlignTop);
-    statsLabel->setWordWrap(true);  // Allow long text to wrap
+    backbutton = new QPushButton(this);
+    backbutton->setText(" <    Back");
+    backbutton->setCursor(Qt::PointingHandCursor);
+    backbutton->setMinimumSize(80, 30);
+    backbutton->setStyleSheet("QPushButton{"
+                              "background-color:transparent;"
+                              "border:1px solid white;"
+                              "border-radius: 10px;"
+                              "}"
+                              "QPushButton:hover{"
+                              "background-color:rgba(255,255,255,0.5);"
+                              "}");
+    backbutton->setMinimumWidth(100);
+    backbutton->setGeometry(width()/7,height()/6,90,30);
+    backbutton->show();
+    connect(backbutton, &QPushButton::clicked, this, &MainWindow::onBackButtonClicked);
+
+    auto statsHead = createLabel("Stats", 28, Qt::AlignCenter);
+    applyShadowEffect(statsHead, BUTTON_SHADOW_BLUR_RADIUS, SHADOW_COLOR);
+    statsHead->setStyleSheet("font-weight:bold;font-size:40px;");
+
+    auto statsHeadLayout = new QHBoxLayout();
+    statsHeadLayout->addWidget(statsHead, Qt::AlignCenter);
+
+    QWidget *statsHeadWid = new QWidget(this);
+    statsHeadWid->setLayout(statsHeadLayout);
+    statsHeadWid->setMinimumWidth(600);
 
     // Prepare the stats text
     QString statsText =
-        "<h2><b>Your Stats</b></h2>"
-        "<ul>"
-        "<li><b>High Score:</b> " + QString::number(highScore) + "</li>"
-        "<li><b>Total Games Played:</b> " + QString::number(totalGamesPlayed) + "</li>"
-        "<li><b>Games Won:</b> " + QString::number(gamesWon) + "</li>"
-        "<li><b>Average Score:</b> " + QString::number(averageScore) + "</li>"
-        "<li><b>Longest Streak:</b> " + QString::number(longestStreak) + " correct in a row</li>"
-        "<li><b>Fastest Time:</b> " + QString::number(fastestTime) + " minutes</li>"
-        "<li><b>Total Correct Answers:</b> " + QString::number(totalCorrectAnswers) + "</li>"
-        "<li><b>Total Incorrect Answers:</b> " + QString::number(totalIncorrectAnswers) + "</li>"
-        "</ul>";
-    // Update the stats label text with the player's stats
-    statsLabel->setText(statsText);
-    statsLabel->show();
+        "<h2 ><b>Your Stats:</b></h2>"
+        "<ul style='display: flex; flex-direction: column; gap: 15px;'>"
+        "<li style='margin-bottom: 10px;text-align:left;'><b>High Score:  </b><span style='color:yellow;'>" + QString::number(highScore) + "</span></li>"
+        "<li style='margin-bottom: 10px;text-align:left;'><b>Total Games Played:  </b> " + QString::number(totalGamesPlayed) + "</li>"
+        "<li style='margin-bottom: 10px;text-align:left;'><b>Games Won:  </b> " + QString::number(gamesWon) + "</li>"
+        "<li style='margin-bottom: 10px;text-align:left;'><b>Average Score:  </b> " + QString::number(averageScore) + "</li>"
+        "<li style='margin-bottom: 10px;text-align:left;'><b>Longest Streak:  </b> " + QString::number(longestStreak) + " correct in a row</li>"
+        "<li style='margin-bottom: 10px;text-align:left;'><b>Fastest Time:  </b> " + QString::number(fastestTime) + " minutes</li>"
+        "<li style='margin-bottom: 10px;text-align:left;'><b>Total Correct Answers:  </b> " + QString::number(totalCorrectAnswers) + "</li>"
+        "<li style='margin-bottom: 10px;text-align:left;'><b>Total Incorrect Answers:  </b> " + QString::number(totalIncorrectAnswers) + "</li>"
+        "</ul><br>";
+
+    QLabel *statsLabel = new QLabel(statsText);
+    statsLabel->setWordWrap(true);
+    statsLabel->setTextFormat(Qt::RichText);
+    statsLabel->setStyleSheet("font-size: 16px; color: white; background-color: transparent;"); // Transparent background
+    statsLabel->setAlignment(Qt::AlignCenter); // Align text to the left
+
+    auto statsLayout = new QVBoxLayout(); // Changed to QVBoxLayout to handle multiple rows
+
+    statsLayout->addWidget(statsLabel);
+
+    auto mainLayout = new QVBoxLayout();
+    replaceCentralWidgetLayout(mainLayout);
+
+    mainLayout->addWidget(statsHeadWid,0,Qt::AlignCenter);
+
+    mainLayout->addLayout(statsLayout);
+
+    mainLayout->setContentsMargins(200, 85, 200, 100);
+
 }
 
 void MainWindow::onBackButtonClicked()

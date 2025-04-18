@@ -46,9 +46,6 @@ public:
     void onPauseClicked();
     void onResumeclicked();
     void on_restartBtn_clicked();
-    void setPlayerStats(int highScore, int totalGamesPlayed, int gamesWon,
-                                    int averageScore, int longestStreak, int fastestTime,
-                        int totalCorrectAnswers, int totalIncorrectAnswers);
     QString generateQuestion(QString domain);
     QProgressBar *createProgressBar();
     QLabel *createLabel(const QString &text, int fontSize, Qt::Alignment alignment);
@@ -74,6 +71,7 @@ private:
     QPushButton *pauseBtn = nullptr;
     QPushButton *exitBtn=nullptr;
     QPushButton *infoBtn=nullptr;
+    QPushButton *backbutton=nullptr;
     CircleTimer *timer=nullptr;
     bool ispaused;
     QWidget *pauseOverlay=nullptr;
@@ -85,5 +83,8 @@ private:
     QString domain;
     GeminiAI *geminiAI;
     SettingsDialog *settingsDialog;
+    int highScore=0, totalGamesPlayed=0,  gamesWon=0,
+         averageScore=0,  longestStreak=0,  fastestTime=-1,
+         totalCorrectAnswers=0,  totalIncorrectAnswers=0;
 };
 #endif // MAINWINDOW_H
