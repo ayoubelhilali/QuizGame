@@ -12,6 +12,10 @@
 #include <QHBoxLayout>
 #include <QSlider>
 
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
+
 #include "answerbox.h"
 #include "circletimer.h"
 #include "geminiai.h"
@@ -53,6 +57,9 @@ public:
     template <typename T>
     void clearWidgets();
     void pausewindow();
+    void connectToDatabase();
+    bool createMcqTable();
+    void updateResponse(const QString &response);
 
 private slots:
     void on_startBtn_clicked();

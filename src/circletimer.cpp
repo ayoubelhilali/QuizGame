@@ -3,6 +3,7 @@
 #include "headers/mainwindow.h"
 #include <QPainter>
 #include <QFont>
+#include <QDebug>
 
 CircleTimer::CircleTimer(QWidget *parent) : QWidget(parent), timeRemaining(10), color(QColor(0, 255, 0)) {
     timer = new QTimer(this);
@@ -39,6 +40,9 @@ void CircleTimer::updateTimer() {
         if (mainWin) {  // Ensure mainWin is valid
             for (auto answers : mainWin->findChildren<AnswerBox *>()) {
                 answers->setEnabled(false);  // Disable buttons
+                if(answers->getclicked()==1){
+                    answers->showresult(answers->checkcorrect());
+                }
             }
         }
         if (timer) {  // Ensure timer is valid

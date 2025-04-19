@@ -10,9 +10,12 @@ class AnswerBox : public QWidget
 
 public:
     explicit AnswerBox(QString t, QString l, int c, QWidget *parent = nullptr);
-    bool checkcorrecct(AnswerBox *A);
+    bool checkcorrect();
     QString getText() const { return text; }
     QLabel *getTextlabel() const{return textLbl;}
+    void setclicked(int c){Answerclicked=c;}
+    int getclicked(){return Answerclicked;}
+    void showresult(int corr);
 
 signals:
     void clicked(AnswerBox *box);
@@ -23,7 +26,8 @@ protected:
 private:
     QString text;
     QString letter;
-    int correct;
+    int correct=0;
+    int Answerclicked;
     QLabel *backgroundLbl;
     QLabel *textLbl;
     QLabel *letterLbl;

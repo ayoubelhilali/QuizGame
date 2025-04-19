@@ -39,14 +39,23 @@ void AnswerBox::mousePressEvent(QMouseEvent *event)
     emit clicked(this);
 }
 
-bool AnswerBox::checkcorrecct(AnswerBox *A)
+bool AnswerBox::checkcorrect()
 {
-    if (true)
+    if (correct)
     {
         return 1;
     }
     else
     {
         return 0;
+    }
+}
+void AnswerBox::showresult(int corr){
+    if(corr==1){
+        textLbl->setStyleSheet("background-color:rgba(0,255,0,0.5); border-radius:12px;");
+        letterLbl->setStyleSheet("background-color:green; border-radius:19px;");
+    }else{
+        textLbl->setStyleSheet("background-color:rgba(255, 0, 0, 0.5); border-radius:12px;");
+        letterLbl->setStyleSheet("background-color:red; border-radius:19px;");
     }
 }

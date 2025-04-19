@@ -18,6 +18,7 @@
 #include "headers/answerbox.h"
 #include "headers/circletimer.h"
 #include "headers/typingeffect.h"
+#include "headers/geminiai.h"
 
 using namespace std;
 namespace
@@ -36,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    connectToDatabase();
     setMinimumSize(MIN_WIDTH, MIN_HEIGHT);
 
     ui->gridLayout->setAlignment(Qt::AlignCenter);
@@ -271,6 +273,10 @@ void MainWindow::DomainsChoose()
     auto domainHead = createLabel("Choose your domain: ", 28, Qt::AlignCenter);
     applyShadowEffect(domainHead, BUTTON_SHADOW_BLUR_RADIUS, SHADOW_COLOR);
 
+    geminiAI = new GeminiAI(this);
+
+
+
     auto generalDomain = createDomainButton("general.svg");
     auto logicDomain = createDomainButton("logic.svg");
     auto techDomain = createDomainButton("tech.svg");
@@ -285,6 +291,7 @@ void MainWindow::DomainsChoose()
         connect(button, &QPushButton::clicked, this, &MainWindow::onDomainButtonClicked);
         button->show();
     }
+    connect(geminiAI, &GeminiAI::responseReceived, this, &MainWindow::updateResponse);
 
     auto domainHeadLayout = new QHBoxLayout();
     domainHeadLayout->addWidget(backbutton, Qt::AlignLeft);
@@ -354,6 +361,11 @@ QPushButton *MainWindow::createDomainButton(const QString &iconName)
 
 void MainWindow::questionsPage(const QString &domain)
 {
+    // Generate questions
+    QString question = "Generate 5 multiple choice questions in the domain of"+domain+" in JSON format. Each question should include: question, 4 options, and the correct_answer.";
+    geminiAI->askQuestion(question);
+    qDebug()<< "Thinking";
+
     pauseBtn = new QPushButton(this);
     pauseBtn->setIcon(QIcon(ICON_PATH + "pauseBtn.png"));
     pauseBtn->setStyleSheet("QPushButton {"
@@ -502,9 +514,11 @@ void MainWindow::clearWidgets()
 void MainWindow::onAnswerBoxClicked(AnswerBox *box)
 {
     box->getTextlabel()->setStyleSheet("background-color:rgba(0,0,0,0.3);");
+    box->setclicked(1);
     for (auto btn : this->findChildren<AnswerBox *>()) {
         if (btn != box) {
             btn->getTextlabel()->setStyleSheet("");
+            btn->setclicked(0);
         }
     }
 }
@@ -521,14 +535,12 @@ void MainWindow::on_settingsBtn_clicked()
     settingsDialog.exec();
 }
 
-
-
 void MainWindow::on_infoBtn_clicked()
 {
     deleteButtons({ui->startBtn, ui->statsBtn, ui->infoBtn, ui->settingsBtn});
     ui->label->deleteLater();
 
-    QPushButton *backbutton = new QPushButton(this);
+    backbutton = new QPushButton(this);
     backbutton->setText(" <    Back");
     backbutton->setCursor(Qt::PointingHandCursor);
     backbutton->setMinimumSize(80, 30);
@@ -541,6 +553,8 @@ void MainWindow::on_infoBtn_clicked()
                               "background-color:rgba(255,255,255,0.5);"
                               "}");
     backbutton->setMinimumWidth(100);
+    backbutton->setGeometry(width()/7,height()/6,90,30);
+    backbutton->show();
     connect(backbutton, &QPushButton::clicked, this, &MainWindow::onBackButtonClicked);
 
     auto infoHead = createLabel("Instructions", 28, Qt::AlignCenter);
@@ -571,7 +585,7 @@ void MainWindow::on_infoBtn_clicked()
         "<li style='text-align:left;'><span style='color:white;'>Correct answers: +10 points</span></li>"
         "<li style='text-align:left;'>Incorrect answers: 0 points</li>"
         "<li style='text-align:left;'><span style='color:orange;'>Time bonus: +5 points</span> for answering within 5 seconds</li>"
-        "<li style= 'text-align:left;'><span style='color:#9B59B6;'>Streak bonus: +2 points</span> for each consecutive correct answer</li>"
+        "<li style= 'text-align:left;'><span style='color:orange;'>Streak bonus: +2 points</span> for each consecutive correct answer</li>"
         "</ul>"
 
         "<b>3 - Power-ups and Helps:</b><br>"
@@ -589,7 +603,7 @@ void MainWindow::on_infoBtn_clicked()
         "<li style='text-align:left;'>The bomb will explode randomly and eliminate one of the wrong answers.</li>"
         "</ul>"
 
-        "<h3 style='color:#CA6F1E;'>End of Game</h3>"
+        "<h3 style='color:yellow;'>End of Game</h3>"
         "<ul>"
         "<li style='text-align:left;'>View your final score</li>"
         "<li style='text-align:left;'>See correct answers for missed questions</li>"
@@ -597,7 +611,7 @@ void MainWindow::on_infoBtn_clicked()
         "<li style='text-align:left;'><b>Return to Main Menu</b>: Exit to the home screen</li>"
         "</ul>"
 
-        "<h3 style='color:#5D6D7E;'>Settings Options</h3>"
+        "<h3 style='color:yellow;'>Settings Options</h3>"
         "<ul>"
         "<li style='text-align:left;'>Toggle sound effects and background music</li>"
         "<li style='text-align:left;'>Adjust difficulty level</li>"
@@ -624,10 +638,8 @@ void MainWindow::on_infoBtn_clicked()
     scrollArea->setWidget(scrollContent);
     scrollLayout->setAlignment(Qt::AlignCenter);
 
-    // -----------------------------------------------------------------------
 
     auto infoHeadLayout = new QHBoxLayout();
-    infoHeadLayout->addWidget(backbutton, Qt::AlignLeft);
     infoHeadLayout->addWidget(infoHead, Qt::AlignCenter);
 
     QWidget *infoheadwid = new QWidget(this);
@@ -752,6 +764,10 @@ void MainWindow::onBackButtonClicked()
     if(timer){
         delete timer;
         timer=nullptr;
+    }
+    if(backbutton){
+        backbutton->deleteLater();
+        backbutton=nullptr;
     }
 
     // Clear the central widget
@@ -912,7 +928,6 @@ void MainWindow::updateVolume(int value) {
     // If using QMediaPlayer for sound
     // mediaPlayer->setVolume(value);
 }
-
 void MainWindow::onPauseClicked(){
     if(ispaused){
         timer->startTimer();
@@ -930,3 +945,39 @@ void MainWindow::on_restartBtn_clicked(){
     timer->setTimeRemaining(10);
     pauseOverlay->hide();
 }
+void MainWindow::connectToDatabase() {
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName("mydatabase.db");
+
+    if (!db.open()) {
+        qDebug() << "❌ Error: Could not open database" << db.lastError();
+    } else {
+        createMcqTable();
+    }
+}
+void MainWindow::updateResponse(const QString &response) {
+    qDebug() << response;
+}
+bool MainWindow::createMcqTable() {
+    QSqlQuery query;
+    QString createTableQuery = R"(
+        CREATE TABLE IF NOT EXISTS mcq_questions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            question TEXT,
+            option1 TEXT,
+            option2 TEXT,
+            option3 TEXT,
+            option4 TEXT,
+            correct_answer TEXT
+        )
+    )";
+
+    if (!query.exec(createTableQuery)) {
+        qDebug() << " Failed to create table:" << query.lastError().text();
+        return false;
+    }
+
+    qDebug() << " Table mcq_questions is ready.";
+    return true;
+}
+
