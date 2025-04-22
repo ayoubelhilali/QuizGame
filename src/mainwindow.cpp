@@ -362,7 +362,7 @@ QPushButton *MainWindow::createDomainButton(const QString &iconName)
 void MainWindow::questionsPage(const QString &domain)
 {
     // Generate questions
-    QString question = "Generate 5 multiple choice questions in the domain of"+domain+" in JSON format. Each question should include: question, 4 options, and the correct_answer.";
+    QString question = "Generate an other 5 multiple-choice questions in the domain of " + domain + " in a STRICT JSON format.The response MUST be a JSON array containing JSON objects. Each object represents a question and must have the following keys:- question (string): The question text. Please minimize escaped characters.- options (array of strings): An array of four possible answer options.- correct_answer (string): The correct answer from the options.Ensure the JSON is valid and UTF-8 encoded. Do NOT include any preamble text or Markdown code blocks.  Just the raw JSON.";
     geminiAI->askQuestion(question);
     qDebug()<< "Thinking";
 
