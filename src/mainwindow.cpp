@@ -114,6 +114,12 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     if(backbutton){
         backbutton->setGeometry(width()/7,height()/6,90,30);
     }
+    if(loadingLabel){
+        // Calculate the center position
+        int x = (this->width() - loadingLabel->width()) / 2;
+        int y = (this->height() - loadingLabel->height()) / 2;
+        loadingLabel->setGeometry(x, y, loadingLabel->width(), loadingLabel->height());
+    }
 }
 
 void MainWindow::paintEvent(QPaintEvent *)
@@ -275,8 +281,6 @@ void MainWindow::DomainsChoose()
 
     geminiAI = new GeminiAI(this);
 
-
-
     auto generalDomain = createDomainButton("general.svg");
     auto logicDomain = createDomainButton("logic.svg");
     auto techDomain = createDomainButton("tech.svg");
@@ -359,13 +363,66 @@ QPushButton *MainWindow::createDomainButton(const QString &iconName)
     return button;
 }
 
-void MainWindow::questionsPage(const QString &domain)
+void MainWindow::onDomainButtonClicked()
 {
+    clearWidgets<QPushButton>();
+    clearWidgets<QLabel>();
+    if(pauseBtn)
+        delete pauseBtn;
+    if(timer)
+        delete timer;
+
+    QPushButton *clickedButton = qobject_cast<QPushButton *>(sender());
+    if (!clickedButton)
+        return;
+
+    QString domain; // Declare domain as a LOCAL variable
+
+    if (clickedButton->objectName() == "entertain")
+    {
+        domain = "Entertainment & Pop Culture";
+    }
+    else if (clickedButton->objectName() == "general")
+    {
+        domain = "General Knowledge";
+    }
+    else if (clickedButton->objectName() == "tech")
+    {
+        domain = "Tech & Coding";
+    }
+    else if (clickedButton->objectName() == "logic")
+    {
+        domain = "Logic & Brain Teasers";
+    }
+
+    // Create and show the loading label *before* starting the AI request
+    QLabel *loadingLabel = new QLabel("Loading", this); // Local variable.  'this' makes it a child of MainWindow
+    loadingLabel->setAlignment(Qt::AlignCenter);
+    loadingLabel->setStyleSheet("font-size: 20px; color: white;");  // Style as needed
+
+    // Calculate the center position
+    int x = (this->width() - loadingLabel->width()) / 2;
+    int y = (this->height() - loadingLabel->height()) / 2;
+    loadingLabel->setGeometry(x, y, loadingLabel->width(), loadingLabel->height());
+    TypingAnimation *typingEffect = new TypingAnimation(loadingLabel,loadingLabel->text(), 200,this);
+    typingEffect->start();
+    loadingLabel->show();
     // Generate questions
     QString question = "Generate an other 5 multiple-choice questions in the domain of " + domain + " in a STRICT JSON format.The response MUST be a JSON array containing JSON objects. Each object represents a question and must have the following keys:- question (string): The question text. Please minimize escaped characters.- options (array of strings): An array of four possible answer options.- correct_answer (string): The correct answer from the options.Ensure the JSON is valid and UTF-8 encoded. Do NOT include any preamble text or Markdown code blocks.  Just the raw JSON.";
     geminiAI->askQuestion(question);
     qDebug()<< "Thinking";
 
+    // Connect the signal to a lambda function that will call questionsPage *after* the response is received.
+    connect(geminiAI, &GeminiAI::responseReceived, this, [this, domain, loadingLabel]() { // Capture loadingLabel!
+        qDebug() << "GeminiAI response received!  Now calling questionsPage."; // Debug message
+        loadingLabel->hide(); // Just hide the label, don't delete it
+        questionsPage(domain,i);
+
+    });
+}
+
+void MainWindow::questionsPage(const QString &domain, int session)
+{
     pauseBtn = new QPushButton(this);
     pauseBtn->setIcon(QIcon(ICON_PATH + "pauseBtn.png"));
     pauseBtn->setStyleSheet("QPushButton {"
@@ -466,38 +523,6 @@ void MainWindow::questionsPage(const QString &domain)
     mainLayout->addLayout(answersLayout);
     mainLayout->setContentsMargins(100, 80, 100, 80);
     setLayout(mainLayout);
-}
-
-void MainWindow::onDomainButtonClicked()
-{
-    clearWidgets<QPushButton>();
-    clearWidgets<QLabel>();
-    if(pauseBtn)
-        delete pauseBtn;
-    if(timer)
-        delete timer;
-
-    QPushButton *clickedButton = qobject_cast<QPushButton *>(sender());
-    if (!clickedButton)
-        return;
-
-    if (clickedButton->objectName() == "entertain")
-    {
-        domain="Entertainment & Pop Culture";
-    }
-    else if (clickedButton->objectName() == "general")
-    {
-        domain="General Knowledge";
-    }
-    else if (clickedButton->objectName() == "tech")
-    {
-        domain="Tech & Coding";
-    }
-    else if (clickedButton->objectName() == "logic")
-    {
-        domain="Logic & Brain Teasers";
-    }
-    questionsPage(domain);
 }
 
 template <typename T>

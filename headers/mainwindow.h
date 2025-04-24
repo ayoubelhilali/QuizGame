@@ -37,7 +37,7 @@ public:
     ~MainWindow();
 
     void DomainsChoose();
-    void questionsPage(const QString &domain);
+    void questionsPage(const QString &domain, int QstNum);
     void clearWidgets();
     void applyShadowEffect(QWidget *widget, int blurRadius, const QColor &color);
     void deleteButtons(const std::initializer_list<QPushButton *> &buttons);
@@ -86,8 +86,8 @@ private:
     QWidget *pausecontainer=nullptr;
     QVBoxLayout *pauselayout=nullptr;
     QLabel *volumetxt=nullptr;
+    QLabel *loadingLabel=nullptr;
     QSlider *volumeSlider=nullptr;
-    QString domain;
     GeminiAI *geminiAI;
     SettingsDialog *settingsDialog;
     int highScore=0, totalGamesPlayed=0,  gamesWon=0,
