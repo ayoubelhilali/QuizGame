@@ -42,7 +42,8 @@ void GeminiAI::setApiKey(const QString &key) {
     apiKey = key;
 }
 
-void GeminiAI::askQuestion(const QString &question) {
+void GeminiAI::askQuestion(const QString &question, QString domain) {
+    qDebug() << "----------  askQuestion executed ------------";
     QUrl url(QString("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=%1").arg(apiKey));
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
@@ -61,15 +62,13 @@ void GeminiAI::askQuestion(const QString &question) {
     QJsonDocument jsonDoc(requestBody);
     QByteArray jsonData = jsonDoc.toJson();
 
-    qDebug() << "🔄 Envoi de la requête à :" << request.url().toString();
-    qDebug() << "📤 Données envoyées :" << jsonData;
 
     QNetworkReply *reply = networkManager.post(request, jsonData);
     connect(reply, &QNetworkReply::errorOccurred, this, [this, reply](QNetworkReply::NetworkError error) {
         qWarning() << "🌐 Erreur réseau :" << reply->errorString();
     });
 
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+    connect(reply, &QNetworkReply::finished, this, [this, reply,domain]() {
         if (reply->error() != QNetworkReply::NoError) {
             emit responseReceived("Erreur lors de la requête vers Gemini.");
             reply->deleteLater();
@@ -81,11 +80,12 @@ void GeminiAI::askQuestion(const QString &question) {
         reply->deleteLater();
 
         processTextResponse(responseData);
-        processJsonQuestionsResponse(responseData);
+        processJsonQuestionsResponse(responseData,domain);
     });
 }
 
 void GeminiAI::processTextResponse(const QByteArray &responseData) {
+    qDebug() << "----------  processTextResponse executed ------------";
     QJsonParseError parseError;
     QJsonDocument jsonResponse = QJsonDocument::fromJson(responseData, &parseError);
 
@@ -129,80 +129,45 @@ void GeminiAI::processTextResponse(const QByteArray &responseData) {
     emit responseReceived("Couldn't process Gemini's response properly.");
 }
 
-void GeminiAI::processJsonQuestionsResponse(const QByteArray &responseData) {
+void GeminiAI::processJsonQuestionsResponse(const QByteArray &responseData, const QString &domain) {
+    qDebug() << "----------  processJsonQuestionsResponse executed ------------";
+
+    QString extractedJsonText = extractJsonTextFromGemini(responseData);
+    if (extractedJsonText.isEmpty()) return;
+
     QJsonParseError parseError;
-    QJsonDocument outerDoc = QJsonDocument::fromJson(responseData, &parseError);
+    QJsonDocument innerDoc = QJsonDocument::fromJson(extractedJsonText.toUtf8(), &parseError);
+    if (parseError.error != QJsonParseError::NoError) return;
 
-    if (parseError.error != QJsonParseError::NoError) {
-        qDebug() << "❌ Failed to parse response:" << parseError.errorString();
-        return;
-    }
+    parseAndStoreQuestions(innerDoc.toJson(), domain);
+}
+QString GeminiAI::extractJsonTextFromGemini(const QByteArray &responseData) {
+    QJsonParseError error;
+    QJsonDocument doc = QJsonDocument::fromJson(responseData, &error);
+    if (error.error != QJsonParseError::NoError || !doc.isObject()) return {};
 
-    QJsonObject jsonObject = outerDoc.object();
+    QJsonObject obj = doc.object();
+    QJsonArray candidates = obj.value("candidates").toArray();
+    if (candidates.isEmpty()) return {};
 
-    if (!jsonObject.contains("candidates")) {
-        qDebug() << "❌ 'candidates' key not found in JSON";
-        return;
-    }
+    QJsonObject content = candidates[0].toObject().value("content").toObject();
+    QJsonArray parts = content.value("parts").toArray();
+    if (parts.isEmpty()) return {};
 
-    QJsonArray candidates = jsonObject["candidates"].toArray();
-    if (candidates.isEmpty()) {
-        qDebug() << "❌ No candidates found";
-        return;
-    }
-
-    QJsonObject candidate = candidates[0].toObject();
-
-    if (!candidate.contains("content")) {
-        qDebug() << "❌ 'content' key not found in candidate";
-        return;
-    }
-
-    QJsonObject content = candidate["content"].toObject();
-
-    if (!content.contains("parts")) {
-        qDebug() << "❌ 'parts' key not found in content";
-        return;
-    }
-
-    QJsonArray parts = content["parts"].toArray();
-    if (parts.isEmpty()) {
-        qDebug() << "❌ No parts found";
-        return;
-    }
-
-    QJsonObject part = parts[0].toObject();
-
-    if (!part.contains("text")) {
-        qDebug() << "❌ 'text' key not found in part";
-        return;
-    }
-
-    QString jsonText = part["text"].toString();
-    qDebug() << "📥 Gemini JSON text:\n" << jsonText;
-
-    if (jsonText.startsWith("```json")) {
-        jsonText = jsonText.remove(0, 7);
-    }
-    if (jsonText.endsWith("```")) {
-        jsonText = jsonText.remove(jsonText.length() - 3, 3);
-    }
-
-    jsonText = removeControlCharacters(jsonText);
-    jsonText = QString::fromUtf8(jsonText.toUtf8());
-
-    QJsonDocument innerDoc = QJsonDocument::fromJson(jsonText.toUtf8(), &parseError);
-
-    if (parseError.error != QJsonParseError::NoError) {
-        qDebug() << "❌ Failed to parse inner JSON:" << parseError.errorString();
-        qDebug() << "❌ Problematic JSON string: " << jsonText;
-        return;
-    }
-
-    parseAndStoreQuestions(innerDoc.toJson());
+    QString rawText = parts[0].toObject().value("text").toString();
+    return cleanJsonText(rawText);
 }
 
-void GeminiAI::parseAndStoreQuestions(const QByteArray& response) {
+QString GeminiAI::cleanJsonText(const QString &rawText) {
+    QString text = rawText;
+    if (text.startsWith("```json")) text.remove(0, 7);
+    if (text.endsWith("```")) text.chop(3);
+    return QString::fromUtf8(removeControlCharacters(text).toUtf8());
+}
+
+
+void GeminiAI::parseAndStoreQuestions(const QByteArray& response, QString domain) {
+    qDebug() << "----------  parseAndStoreQuestions executed ------------";
     QJsonDocument doc = QJsonDocument::fromJson(response);
 
     if (!doc.isArray()) {
@@ -227,20 +192,17 @@ void GeminiAI::parseAndStoreQuestions(const QByteArray& response) {
         QJsonArray options = obj["options"].toArray();
         QString correct = obj["correct_answer"].toString();
 
-        qDebug() << "📌 Question:" << question;
-        qDebug() << "📌 Option1:" << options[0].toString();
-        qDebug() << "📌 Correct answer:" << correct;
-
         if (options.size() != 4) {
             qDebug() << "❌ Skipping invalid options count";
             continue;
         }
 
         QSqlQuery query(db);
-        query.prepare("INSERT INTO mcq_questions (question, option1, option2, option3, option4, correct_answer) "
-                      "VALUES (:q, :o1, :o2, :o3, :o4, :c)");
+        query.prepare("INSERT INTO mcq_questions (question,domain, option1, option2, option3, option4, correct_answer) "
+                      "VALUES (:q, :d,:o1, :o2, :o3, :o4, :c)");
 
         query.bindValue(":q", question);
+        query.bindValue(":d", domain);
         query.bindValue(":o1", options[0].toString());
         query.bindValue(":o2", options[1].toString());
         query.bindValue(":o3", options[2].toString());
@@ -270,4 +232,41 @@ void GeminiAI::parseAndStoreQuestions(const QByteArray& response) {
             qDebug() << " Successfully committed" << insertCount << "questions to database";
         }
     }
+}
+QVector<QJsonObject> GeminiAI::getQuestionsFromDB() {
+    qDebug() << "----------  getQuestionfromDb executed ------------";
+    QVector<QJsonObject> questions;
+
+    QSqlDatabase db = QSqlDatabase::database();
+    if (!db.isOpen()) {
+        qDebug() << "❌ Base de données non ouverte.";
+        return questions;
+    }
+
+    QSqlQuery query("SELECT question,domain, option1, option2, option3, option4, correct_answer FROM mcq_questions", db);
+    if (!query.exec()) {
+        qDebug() << "❌ Erreur lors de l'exécution de la requête SELECT :" << query.lastError().text();
+        return questions;
+    }
+
+    while (query.next()) {
+        QJsonObject questionObj;
+        questionObj["question"] = query.value(0).toString();
+
+        QJsonArray options;
+
+        options.append(query.value(2).toString());
+        options.append(query.value(3).toString());
+        options.append(query.value(4).toString());
+        options.append(query.value(5).toString());
+
+        questionObj["options"] = options;
+        questionObj["domain"] = query.value(1).toString();
+        questionObj["correct_answer"] = query.value(6).toString();
+
+        questions.append(questionObj);
+    }
+
+    qDebug() << "✅" << questions.size() << "questions récupérées depuis la base de données.";
+    return questions;
 }

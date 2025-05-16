@@ -14,12 +14,14 @@ class GeminiAI : public QObject {
 
 public:
     explicit GeminiAI(QObject *parent = nullptr);
-    void askQuestion(const QString &question);
-    void parseAndStoreQuestions(const QByteArray& response);
+    void askQuestion(const QString &question, QString domain);
+    void parseAndStoreQuestions(const QByteArray& response,QString domain);
     void processTextResponse(const QByteArray &responseData);
     void setApiKey(const QString &key);
-    void processJsonQuestionsResponse(const QByteArray &responseData);
-
+    void processJsonQuestionsResponse(const QByteArray &responseData, const QString &domain);
+    QVector<QJsonObject> getQuestionsFromDB();
+    QString extractJsonTextFromGemini(const QByteArray &responseData);
+    QString cleanJsonText(const QString &rawText);
 signals:
     void responseReceived(const QString &response);
 

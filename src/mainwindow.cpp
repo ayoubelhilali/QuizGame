@@ -10,9 +10,15 @@
 #include <QDebug>
 #include <memory>
 #include <QButtonGroup>
+#include <QVector>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QSqlDatabase>
+#include <QSqlQuery>
 
 #include "headers/mainwindow.h"
 #include "headers/settingsdialog.h"
+#include "qevent.h"
 #include "ui_mainwindow.h"
 #include "headers/hovereffect.h"
 #include "headers/answerbox.h"
@@ -21,8 +27,8 @@
 #include "headers/geminiai.h"
 
 using namespace std;
-namespace
-{
+
+namespace {
 const int MIN_WIDTH = 900;
 const int MIN_HEIGHT = 600;
 const QColor SHADOW_COLOR(0, 194, 203);
@@ -33,32 +39,17 @@ const QString BUTTON_STYLE = "background-color:transparent; border: 2px solid wh
 const QString ICON_PATH = ":/Icons/";
 }
 
+// Constructor and Destructor
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow)
+    : QMainWindow(parent), ui(new Ui::MainWindow),
+    pauseBtn(nullptr),
+    backbutton(nullptr), loadingLabel(nullptr), geminiAI(nullptr),
+    highScore(0), totalGamesPlayed(0), gamesWon(0),
+    averageScore(0), longestStreak(0), fastestTime(0),
+    totalCorrectAnswers(0), totalIncorrectAnswers(0)
 {
     ui->setupUi(this);
-    connectToDatabase();
-    setMinimumSize(MIN_WIDTH, MIN_HEIGHT);
-
-    ui->gridLayout->setAlignment(Qt::AlignCenter);
-
-    applyShadowEffect(ui->label, SHADOW_BLUR_RADIUS, SHADOW_COLOR);
-
-    setupButton(ui->startBtn, "startBtn");
-    setupButton(ui->statsBtn, "stats-icon.svg");
-    setupButton(ui->infoBtn, "info.svg");
-    setupButton(ui->settingsBtn, "settings.svg");
-
-    QPushButton *buttons[] = {ui->startBtn, ui->statsBtn, ui->infoBtn, ui->settingsBtn};
-    for (QPushButton *button : buttons)
-    {
-        applyShadowEffect(button, BUTTON_SHADOW_BLUR_RADIUS, SHADOW_COLOR);
-        new HoverEffect(button);
-    }
-
-    resize(MIN_WIDTH, MIN_HEIGHT);
-
-    // Initialize pauseOverlay and pausecontainer to nullptr
+    initializeUI();
     pauseOverlay = nullptr;
     pausecontainer = nullptr;
     exitBtn = nullptr;
@@ -69,13 +60,63 @@ MainWindow::MainWindow(QWidget *parent)
     timer = nullptr;
 }
 
+MainWindow::~MainWindow()
+{
+    // Clean up dynamically allocated objects
+    delete geminiAI;
+    delete timer;
+}
+
+void MainWindow::initializeUI()
+{
+    if (!connectToDatabase()) {
+        QMessageBox::critical(this, "Database Error", "Failed to connect to database!");
+    }
+
+    setMinimumSize(MIN_WIDTH, MIN_HEIGHT);
+    ui->gridLayout->setAlignment(Qt::AlignCenter);
+
+    applyShadowEffect(ui->label, SHADOW_BLUR_RADIUS, SHADOW_COLOR);
+
+    // Initialize buttons
+    setupMainButtons();
+}
+
+template<typename T>
+void MainWindow::clearWidgets()
+{
+    for (auto widget : this->findChildren<T*>()) {
+        widget->deleteLater();
+    }
+}
+
+void MainWindow::setupMainButtons()
+{
+    setupButton(ui->startBtn, "startBtn");
+    setupButton(ui->statsBtn, "stats-icon.svg");
+    setupButton(ui->infoBtn, "info.svg");
+    setupButton(ui->settingsBtn, "settings.svg");
+
+    QPushButton *buttons[] = {ui->startBtn, ui->statsBtn, ui->infoBtn, ui->settingsBtn};
+    for (QPushButton *button : buttons) {
+        applyShadowEffect(button, BUTTON_SHADOW_BLUR_RADIUS, SHADOW_COLOR);
+        new HoverEffect(button);
+    }
+}
+
+// UI Helper Methods
 void MainWindow::applyShadowEffect(QWidget *widget, int blurRadius, const QColor &color)
 {
-    auto shadowEffect = std::make_unique<QGraphicsDropShadowEffect>(this);
+    // Delete existing effect if any
+    if (widget->graphicsEffect()) {
+        delete widget->graphicsEffect();
+    }
+
+    auto shadowEffect = new QGraphicsDropShadowEffect(widget);
     shadowEffect->setBlurRadius(blurRadius);
     shadowEffect->setColor(color);
     shadowEffect->setOffset(0, 0);
-    widget->setGraphicsEffect(shadowEffect.release());
+    widget->setGraphicsEffect(shadowEffect);
 }
 
 void MainWindow::setupButton(QPushButton *button, const QString &iconName)
@@ -85,105 +126,19 @@ void MainWindow::setupButton(QPushButton *button, const QString &iconName)
     button->setIconSize(QSize(BUTTON_ICON_SIZE, BUTTON_ICON_SIZE));
 }
 
-void MainWindow::resizeEvent(QResizeEvent *event)
-{
-    QSize parentSize = event->size();
-    QWidget *layoutContainer = ui->container;
-    QSize layoutSize = layoutContainer->size();
-    int x = (parentSize.width() - layoutSize.width()) / 2;
-    int y = (parentSize.height() - layoutSize.height()) / 2;
-    layoutContainer->move(x, y);
-    QWidget::resizeEvent(event);
-
-    QMainWindow::resizeEvent(event);
-    if (pauseBtn) {  // Check if button exists
-        pauseBtn->move(this->width()/13, this->height()/13);  // Keep it at top-left
-    }
-    if(pauseOverlay){
-        pauseOverlay->setGeometry(0,0,this->width(),this->height());
-    }
-    if(pausecontainer){
-        pausecontainer->setGeometry(width() / 4,height() / 4, width() / 2, height() / 2);
-    }
-    if(exitBtn && pausecontainer){
-        exitBtn->setGeometry(pausecontainer->width()/17,pausecontainer->height()/13,BUTTON_ICON_SIZE+10,BUTTON_ICON_SIZE+10);
-    }
-    if(infoBtn && pausecontainer){
-        infoBtn->setGeometry(pausecontainer->width()-pausecontainer->width()/8,pausecontainer->height()/13,BUTTON_ICON_SIZE+10,BUTTON_ICON_SIZE+10);
-    }
-    if(backbutton){
-        backbutton->setGeometry(width()/7,height()/6,90,30);
-    }
-    if(loadingLabel){
-        // Calculate the center position
-        int x = (this->width() - loadingLabel->width()) / 2;
-        int y = (this->height() - loadingLabel->height()) / 2;
-        loadingLabel->setGeometry(x, y, loadingLabel->width(), loadingLabel->height());
-    }
-}
-
-void MainWindow::paintEvent(QPaintEvent *)
-{
-    QPainter painter(this);
-    QPixmap pixmap(":/images/quiz-background.jpg");
-    painter.drawPixmap(0, 0, width(), height(), pixmap);
-}
-
-MainWindow::~MainWindow()
-{
-    // Correctly delete dynamically allocated objects in the destructor
-    if (pauseOverlay) delete pauseOverlay;
-    if (pausecontainer) delete pausecontainer;
-    if (exitBtn) delete exitBtn;
-    if (infoBtn) delete infoBtn;
-    if (volumetxt) delete volumetxt;
-    if (volumeSlider) delete volumeSlider;
-    if (pauseBtn) delete pauseBtn;
-    if(timer) delete timer;
-
-}
-
-void MainWindow::on_startBtn_clicked()
-{
-    deleteButtons({ui->startBtn, ui->statsBtn, ui->infoBtn, ui->settingsBtn});
-
-    auto waitLabel = createLabel("Please wait", 20, Qt::AlignCenter);
-    TypingAnimation *typingEffect = new TypingAnimation(waitLabel,waitLabel->text(), 200,this);
-    typingEffect->start();
-
-    auto progressBar = createProgressBar();
-
-    auto waitLayout = new QVBoxLayout();
-    ui->label->setAlignment(Qt::AlignCenter);
-    waitLayout->addWidget(ui->label);
-    waitLayout->addSpacing(20);
-    waitLayout->addWidget(waitLabel);
-    waitLayout->addWidget(progressBar);
-    waitLayout->setAlignment(Qt::AlignCenter);
-    waitLayout->setContentsMargins(200, 100, 200, 200);
-
-    auto waitWidget = new QWidget(this);
-    waitWidget->setLayout(waitLayout);
-    waitWidget->setMaximumWidth(500);
-
-    replaceCentralWidgetLayout(waitLayout);
-    waitWidget->show();
-
-    startProgressBar(progressBar, waitLabel,typingEffect);
-}
-
 void MainWindow::deleteButtons(const std::initializer_list<QPushButton *> &buttons)
 {
-    for (QPushButton *button : buttons)
-    {
-        delete button;
+    for (QPushButton *button : buttons) {
+        if (button) {
+            button->deleteLater();
+        }
     }
 }
 
 QLabel *MainWindow::createLabel(const QString &text, int fontSize, Qt::Alignment alignment)
 {
     auto label = new QLabel(text, this);
-    label->setStyleSheet(QString("font-size: %1px;").arg(fontSize));
+    label->setStyleSheet(QString("font-size: %1px; color: white;").arg(fontSize));
     label->setAlignment(alignment);
     label->setWordWrap(true);
     return label;
@@ -213,55 +168,151 @@ QProgressBar *MainWindow::createProgressBar()
     return progressBar;
 }
 
+QPushButton *MainWindow::createDomainButton(const QString &iconName)
+{
+    auto button = new QPushButton(this);
+    button->setIcon(QIcon(ICON_PATH + iconName));
+    button->setStyleSheet("background-color:transparent;");
+    button->setIconSize(QSize(130, 140));
+    button->setCursor(Qt::PointingHandCursor);
+    return button;
+}
+
 void MainWindow::replaceCentralWidgetLayout(QLayout *newLayout)
 {
     QWidget *centralWidget = this->centralWidget();
-    if (centralWidget && centralWidget->layout())
-    {
-        QLayout *oldLayout = centralWidget->layout();
-        QLayoutItem *child;
-        while ((child = oldLayout->takeAt(0)) != nullptr)
-        {
-            if (child->widget())
-            {
-                child->widget()->setParent(nullptr); // Detach widget from layout
-            }
-            delete child; // Delete the layout item
-        }
+    QLayout *oldLayout = centralWidget->layout();
 
-        delete oldLayout; // Delete the old layout
+    // Clear existing layout and widgets
+    if (oldLayout) {
+        QLayoutItem *item;
+        while ((item = oldLayout->takeAt(0))) {
+            if (QWidget *widget = item->widget()) {
+                widget->setParent(nullptr);
+                widget->deleteLater();
+            }
+            delete item;
+        }
+        delete oldLayout;
     }
+
     centralWidget->setLayout(newLayout);
 }
 
-void MainWindow::startProgressBar(QProgressBar *progressBar, QLabel *waitLabel,TypingAnimation *typingeffect)
+// Event Handlers
+void MainWindow::resizeEvent(QResizeEvent *event)
 {
-    auto timer = new QTimer(this);
-    int duration = 1000; // Total duration in milliseconds
-    int interval = 50; // Interval in milliseconds
+    QSize parentSize = event->size();
+    QWidget *layoutContainer = ui->container;
+    QSize layoutSize = layoutContainer->size();
+    int x = (parentSize.width() - layoutSize.width()) / 2;
+    int y = (parentSize.height() - layoutSize.height()) / 2;
+    layoutContainer->move(x, y);
+    QWidget::resizeEvent(event);
+
+    QMainWindow::resizeEvent(event);
+    updateWidgetPositionsOnResize();
+}
+
+void MainWindow::updateWidgetPositionsOnResize()
+{
+    if (pauseBtn) {
+        pauseBtn->move(this->width()/13, this->height()/13);
+    }
+    if (pauseOverlay) {
+        pauseOverlay->setGeometry(0, 0, this->width(), this->height());
+    }
+    if (pausecontainer) {
+        pausecontainer->setGeometry(width() / 4, height() / 4, width() / 2, height() / 2);
+    }
+    if (exitBtn && pausecontainer) {
+        exitBtn->setGeometry(pausecontainer->width()/17, pausecontainer->height()/13,
+                             BUTTON_ICON_SIZE+10, BUTTON_ICON_SIZE+10);
+    }
+    if (infoBtn && pausecontainer) {
+        infoBtn->setGeometry(pausecontainer->width()-pausecontainer->width()/8, pausecontainer->height()/13,
+                             BUTTON_ICON_SIZE+10, BUTTON_ICON_SIZE+10);
+    }
+    if (backbutton) {
+        backbutton->setGeometry(width()/7, height()/6, 90, 30);
+    }
+    if (loadingLabel) {
+        int x = (this->width() - loadingLabel->width()) / 2;
+        int y = (this->height() - loadingLabel->height()) / 2;
+        loadingLabel->setGeometry(x, y, loadingLabel->width(), loadingLabel->height());
+    }
+}
+
+void MainWindow::paintEvent(QPaintEvent *)
+{
+    QPainter painter(this);
+    QPixmap pixmap(":/images/quiz-background.jpg");
+    painter.drawPixmap(0, 0, width(), height(), pixmap);
+}
+
+// Main Game Flow Methods
+void MainWindow::on_startBtn_clicked()
+{
+    deleteButtons({ui->startBtn, ui->statsBtn, ui->infoBtn, ui->settingsBtn});
+
+    auto waitLabel = createLabel("Please wait", 20, Qt::AlignCenter);
+    TypingAnimation *typingEffect = new TypingAnimation(waitLabel, waitLabel->text(), 200, this);
+    typingEffect->start();
+
+    auto progressBar = createProgressBar();
+
+    auto waitLayout = new QVBoxLayout();
+    ui->label->setAlignment(Qt::AlignCenter);
+    waitLayout->addWidget(ui->label);
+    waitLayout->addSpacing(20);
+    waitLayout->addWidget(waitLabel);
+    waitLayout->addWidget(progressBar);
+    waitLayout->setAlignment(Qt::AlignCenter);
+    waitLayout->setContentsMargins(200, 100, 200, 200);
+
+    auto waitWidget = new QWidget(this);
+    waitWidget->setLayout(waitLayout);
+    waitWidget->setMaximumWidth(500);
+
+    replaceCentralWidgetLayout(waitLayout);
+    waitWidget->show();
+
+    startProgressBar(progressBar, waitLabel, typingEffect);
+}
+
+void MainWindow::startProgressBar(QProgressBar *progressBar, QLabel *waitLabel, TypingAnimation *typingEffect)
+{
+    auto *progressTimer = new QTimer(this);
+    int duration = 1000;
+    int interval = 50;
     int steps = duration / interval;
     int stepSize = 100 / steps;
     int progress = 0;
 
-    connect(timer, &QTimer::timeout, this, [=] () mutable {
-        if (progress < 100) {
-            progress += stepSize;
-            progressBar->setValue(progress);
-        } else {
-            timer->stop();
-            typingeffect->stop();
+    connect(progressTimer, &QTimer::timeout, this, [=]() mutable {
+        progress += stepSize;
+        progressBar->setValue(progress);
+
+        if (progress >= 100) {
+            progressTimer->stop();
+            progressTimer->deleteLater();
+            typingEffect->stop();
             ui->label->hide();
             waitLabel->hide();
             progressBar->hide();
-            DomainsChoose();
+            showDomainSelectionScreen();
         }
     });
-    timer->start(interval);
+    progressTimer->start(interval);
 }
 
-void MainWindow::DomainsChoose()
+void MainWindow::createBackButton()
 {
-    QPushButton *backbutton = new QPushButton(this);
+    if (backbutton) {
+        backbutton->deleteLater();
+    }
+
+    backbutton = new QPushButton(this);
     backbutton->setText(" <    Back");
     backbutton->setCursor(Qt::PointingHandCursor);
     backbutton->setMinimumSize(80, 30);
@@ -275,12 +326,19 @@ void MainWindow::DomainsChoose()
                               "}");
     backbutton->setMinimumWidth(100);
     connect(backbutton, &QPushButton::clicked, this, &MainWindow::onBackButtonClicked);
+    backbutton->show();
+}
+
+void MainWindow::showDomainSelectionScreen()
+{
+    createBackButton();
 
     auto domainHead = createLabel("Choose your domain: ", 28, Qt::AlignCenter);
     applyShadowEffect(domainHead, BUTTON_SHADOW_BLUR_RADIUS, SHADOW_COLOR);
 
     geminiAI = new GeminiAI(this);
 
+    // Create domain buttons
     auto generalDomain = createDomainButton("general.svg");
     auto logicDomain = createDomainButton("logic.svg");
     auto techDomain = createDomainButton("tech.svg");
@@ -290,13 +348,23 @@ void MainWindow::DomainsChoose()
     for (QPushButton *button : buttons)
     {
         button->setCursor(Qt::PointingHandCursor);
-        button->setMaximumWidth(140); // Increased button width
-        button->setMaximumHeight(180); // Increased button height
+        button->setMaximumWidth(140);
+        button->setMaximumHeight(180);
         connect(button, &QPushButton::clicked, this, &MainWindow::onDomainButtonClicked);
         button->show();
     }
-    connect(geminiAI, &GeminiAI::responseReceived, this, &MainWindow::updateResponse);
 
+    // Set object names for identification
+    generalDomain->setObjectName("general");
+    logicDomain->setObjectName("logic");
+    techDomain->setObjectName("tech");
+    entertainDomain->setObjectName("entertain");
+
+    setupDomainSelectionLayout(domainHead, buttons);
+}
+
+void MainWindow::setupDomainSelectionLayout(QLabel *domainHead, QPushButton *buttons[])
+{
     auto domainHeadLayout = new QHBoxLayout();
     domainHeadLayout->addWidget(backbutton, Qt::AlignLeft);
     domainHeadLayout->addWidget(domainHead, Qt::AlignCenter);
@@ -305,10 +373,11 @@ void MainWindow::DomainsChoose()
     domainheadwid->setLayout(domainHeadLayout);
     domainheadwid->setMinimumWidth(600);
 
-    auto domainsLayout = new QVBoxLayout(); // Changed to QVBoxLayout to handle multiple rows
+    auto domainsLayout = new QVBoxLayout();
     auto firstRowLayout = new QHBoxLayout();
     auto secondRowLayout = new QHBoxLayout();
 
+    // Distribute buttons into rows
     for (int i = 0; i < 4; ++i)
     {
         if (i < 3)
@@ -328,14 +397,9 @@ void MainWindow::DomainsChoose()
 
     auto mainLayout = new QVBoxLayout();
     replaceCentralWidgetLayout(mainLayout);
-    mainLayout->addWidget(domainheadwid,0,Qt::AlignCenter);
+    mainLayout->addWidget(domainheadwid, 0, Qt::AlignCenter);
     mainLayout->addLayout(domainsLayout);
     mainLayout->setContentsMargins(100, 100, 100, 100);
-
-    generalDomain->setObjectName("general");
-    logicDomain->setObjectName("logic");
-    techDomain->setObjectName("tech");
-    entertainDomain->setObjectName("entertain");
 
     // Adjust layout based on available space
     adjustDomainLayout(firstRowLayout, secondRowLayout, buttons);
@@ -343,7 +407,7 @@ void MainWindow::DomainsChoose()
 
 void MainWindow::adjustDomainLayout(QHBoxLayout *firstRowLayout, QHBoxLayout *secondRowLayout, QPushButton *buttons[])
 {
-    int availableWidth = this->width() - 200; // Adjust based on your margins
+    int availableWidth = this->width() - 200;
     int buttonWidth = buttons[0]->maximumWidth() + firstRowLayout->spacing();
     int buttonsPerRow = availableWidth / buttonWidth;
 
@@ -354,74 +418,84 @@ void MainWindow::adjustDomainLayout(QHBoxLayout *firstRowLayout, QHBoxLayout *se
     }
 }
 
-QPushButton *MainWindow::createDomainButton(const QString &iconName)
-{
-    auto button = new QPushButton(this);
-    button->setIcon(QIcon(ICON_PATH + iconName));
-    button->setStyleSheet("background-color:transparent;");
-    button->setIconSize(QSize(130, 140)); // Increased icon size
-    return button;
-}
-
 void MainWindow::onDomainButtonClicked()
 {
     clearWidgets<QPushButton>();
     clearWidgets<QLabel>();
-    if(pauseBtn)
+    if (pauseBtn)
         delete pauseBtn;
-    if(timer)
+    if (timer)
         delete timer;
 
     QPushButton *clickedButton = qobject_cast<QPushButton *>(sender());
     if (!clickedButton)
         return;
 
-    QString domain; // Declare domain as a LOCAL variable
+    QString domain = getDomainFromButton(clickedButton);
 
-    if (clickedButton->objectName() == "entertain")
-    {
-        domain = "Entertainment & Pop Culture";
-    }
-    else if (clickedButton->objectName() == "general")
-    {
-        domain = "General Knowledge";
-    }
-    else if (clickedButton->objectName() == "tech")
-    {
-        domain = "Tech & Coding";
-    }
-    else if (clickedButton->objectName() == "logic")
-    {
-        domain = "Logic & Brain Teasers";
-    }
-
-    // Create and show the loading label *before* starting the AI request
-    QLabel *loadingLabel = new QLabel("Loading", this); // Local variable.  'this' makes it a child of MainWindow
+    // Create loading indicator
+    loadingLabel = new QLabel("Loading", this);
     loadingLabel->setAlignment(Qt::AlignCenter);
-    loadingLabel->setStyleSheet("font-size: 20px; color: white;");  // Style as needed
+    loadingLabel->setStyleSheet("font-size: 20px; color: white;");
 
-    // Calculate the center position
+    // Position loading label
     int x = (this->width() - loadingLabel->width()) / 2;
     int y = (this->height() - loadingLabel->height()) / 2;
     loadingLabel->setGeometry(x, y, loadingLabel->width(), loadingLabel->height());
-    TypingAnimation *typingEffect = new TypingAnimation(loadingLabel,loadingLabel->text(), 200,this);
+
+    TypingAnimation *typingEffect = new TypingAnimation(loadingLabel, loadingLabel->text(), 200, this);
     typingEffect->start();
     loadingLabel->show();
+
     // Generate questions
-    QString question = "Generate an other 5 multiple-choice questions in the domain of " + domain + " in a STRICT JSON format.The response MUST be a JSON array containing JSON objects. Each object represents a question and must have the following keys:- question (string): The question text. Please minimize escaped characters.- options (array of strings): An array of four possible answer options.- correct_answer (string): The correct answer from the options.Ensure the JSON is valid and UTF-8 encoded. Do NOT include any preamble text or Markdown code blocks.  Just the raw JSON.";
-    geminiAI->askQuestion(question);
-    qDebug()<< "Thinking";
+    generateQuestionsForDomain(domain);
+}
 
-    // Connect the signal to a lambda function that will call questionsPage *after* the response is received.
-    connect(geminiAI, &GeminiAI::responseReceived, this, [this, domain, loadingLabel]() { // Capture loadingLabel!
-        qDebug() << "GeminiAI response received!  Now calling questionsPage."; // Debug message
-        loadingLabel->hide(); // Just hide the label, don't delete it
-        questionsPage(domain,i);
+QString MainWindow::getDomainFromButton(QPushButton *button)
+{
+    if (button->objectName() == "entertain")
+        return "Entertainment & Pop Culture";
+    else if (button->objectName() == "general")
+        return "General Knowledge";
+    else if (button->objectName() == "tech")
+        return "Tech & Coding";
+    else if (button->objectName() == "logic")
+        return "Logic & Brain Teasers";
 
+    return "General Knowledge"; // Default
+}
+
+void MainWindow::generateQuestionsForDomain(const QString &domain)
+{
+    QString prompt = "Generate an other 5 multiple-choice questions in the domain of " + domain +
+                     " in a STRICT JSON format.The response MUST be a JSON array containing JSON objects. " +
+                     "Each object represents a question and must have the following keys:" +
+                     "- question (string): The question text. Please minimize escaped characters." +
+                     "- options (array of strings): An array of four possible answer options." +
+                     "- correct_answer (string): The correct answer from the options." +
+                     "Ensure the JSON is valid and UTF-8 encoded. Do NOT include any preamble text or " +
+                     "Markdown code blocks. Just the raw JSON.";
+
+    geminiAI->askQuestion(prompt, domain);
+    qDebug() << "Generating questions for domain: " << domain;
+
+    int sessionId = 0;
+    connect(geminiAI, &GeminiAI::responseReceived, this, [=]() {
+        qDebug() << "GeminiAI response received! Now loading questions.";
+        if (loadingLabel) {
+            loadingLabel->hide();
+        }
+        startQuizSession(domain, sessionId);
     });
 }
 
-void MainWindow::questionsPage(const QString &domain, int session)
+void MainWindow::startQuizSession(const QString &domain, int session)
+{
+    createPauseButton();
+    setupQuizLayout(domain, session);
+}
+
+void MainWindow::createPauseButton()
 {
     pauseBtn = new QPushButton(this);
     pauseBtn->setIcon(QIcon(ICON_PATH + "pauseBtn.png"));
@@ -438,43 +512,59 @@ void MainWindow::questionsPage(const QString &domain, int session)
 
     // Set initial position
     pauseBtn->move(this->width()/13, this->height()/13);
-    ispaused=false;
+    ispaused = false;
     connect(pauseBtn, &QPushButton::clicked, this, &MainWindow::onPauseClicked);
+}
 
-
+void MainWindow::setupQuizLayout(const QString &domain, int sessionId)
+{
+    // Create header elements
     auto domainNameTxt = createLabel("Domain: ", 10, Qt::AlignLeft);
-    domainNameTxt->setStyleSheet("color:yellow;"
-                                 "font: 9pt '8514oem';");
-    auto domainName = createLabel(domain, 10, Qt::AlignLeft);
-    domainName->setStyleSheet( "font:20pt 'Terminal';");
+    domainNameTxt->setStyleSheet("color:yellow; font: 9pt '8514oem';");
 
+    auto domainName = createLabel(domain, 10, Qt::AlignLeft);
+    domainName->setStyleSheet("font:20pt 'Terminal';");
+
+    // Create timer
     timer = new CircleTimer(this);
-    timer->setFixedSize(60,60);
+    timer->setFixedSize(60, 60);
     timer->setStyleSheet("margin:14px;");
     timer->startTimer();
     timer->show();
 
+    // Create score display
     auto scoreTxt = createLabel("Score: ", 10, Qt::AlignRight);
-    scoreTxt->setStyleSheet("color:yellow;"
-                            "font: 15pt 'Terminal';");
+    scoreTxt->setStyleSheet("color:yellow; font: 15pt 'Terminal';");
+
     auto score = createLabel("100", 10, Qt::AlignRight);
     score->setStyleSheet("font: 12pt 'Terminal';");
 
-    auto questionLabel = createLabel(generateQuestion(domain), 15, Qt::AlignCenter);
-    applyShadowEffect(questionLabel,SHADOW_BLUR_RADIUS,SHADOW_COLOR);
+    // Generate question and display
+    QJsonObject question = generateQuestion(domain, sessionId);
+    auto questionLabel = createLabel(question["question"].toString(), 15, Qt::AlignCenter);
+    applyShadowEffect(questionLabel, SHADOW_BLUR_RADIUS, SHADOW_COLOR);
     questionLabel->setStyleSheet("font: 15pt 'Terminal';");
     questionLabel->setWordWrap(true);
 
-    auto B1 = new AnswerBox("khadija", "A",-1, this);
-    auto B2 = new AnswerBox("Halima", "B",-1,this);
-    auto B3 = new AnswerBox("Fatima", "C", -1,this);
-    auto B4 = new AnswerBox("Aicha", "D",-1,this);
+    // Create answer boxes
+    auto B1 = new AnswerBox("Option1", "A", -1, this);
+    auto B2 = new AnswerBox("Option2", "B", -1, this);
+    auto B3 = new AnswerBox("Option3", "C", -1, this);
+    auto B4 = new AnswerBox("Option4", "D", -1, this);
 
     connect(B1, &AnswerBox::clicked, this, &MainWindow::onAnswerBoxClicked);
     connect(B2, &AnswerBox::clicked, this, &MainWindow::onAnswerBoxClicked);
     connect(B3, &AnswerBox::clicked, this, &MainWindow::onAnswerBoxClicked);
     connect(B4, &AnswerBox::clicked, this, &MainWindow::onAnswerBoxClicked);
 
+    // Create layout
+    createQuizPageLayout(domainNameTxt, domainName, scoreTxt, score, questionLabel, B1, B2, B3, B4);
+}
+
+void MainWindow::createQuizPageLayout(QLabel *domainNameTxt, QLabel *domainName, QLabel *scoreTxt,
+                                      QLabel *score, QLabel *questionLabel,
+                                      AnswerBox *B1, AnswerBox *B2, AnswerBox *B3, AnswerBox *B4)
+{
     auto mainLayout = qobject_cast<QVBoxLayout *>(ui->centralwidget->layout());
     if (!mainLayout)
     {
@@ -482,27 +572,32 @@ void MainWindow::questionsPage(const QString &domain, int session)
         ui->centralwidget->setLayout(mainLayout);
     }
 
-    auto domainwidget=new QWidget;
-    domainwidget->setFixedSize(200,80);
+    // Create domain and score widgets
+    auto domainwidget = new QWidget;
+    domainwidget->setFixedSize(200, 80);
 
-    auto scorewidget=new QWidget;
-    scorewidget->setFixedSize(180,80);
+    auto scorewidget = new QWidget;
+    scorewidget->setFixedSize(180, 80);
 
+    // Create layouts
     auto headLayout = new QHBoxLayout();
-    auto scorelayout=new QHBoxLayout(scorewidget);
-    auto domainlayout=new QHBoxLayout(domainwidget);
+    auto scorelayout = new QHBoxLayout(scorewidget);
+    auto domainlayout = new QHBoxLayout(domainwidget);
 
+    // Add widgets to domain layout
     domainlayout->addWidget(domainNameTxt);
     domainlayout->addWidget(domainName);
 
+    // Add widgets to score layout
     scorelayout->addWidget(scoreTxt);
     scorelayout->addWidget(score);
     scorelayout->setAlignment(Qt::AlignRight);
 
+    // Add widgets to head layout
     headLayout->addSpacing(20);
-    headLayout->addWidget(domainwidget,Qt::AlignLeft);
-    headLayout->addWidget(timer,Qt::AlignCenter);
-    headLayout->addWidget(scorewidget,Qt::AlignRight);
+    headLayout->addWidget(domainwidget, Qt::AlignLeft);
+    headLayout->addWidget(timer, Qt::AlignCenter);
+    headLayout->addWidget(scorewidget, Qt::AlignRight);
     headLayout->addSpacing(20);
 
     auto headWidget = new QWidget(this);
@@ -510,30 +605,21 @@ void MainWindow::questionsPage(const QString &domain, int session)
     headWidget->setMinimumWidth(700);
     headWidget->setMinimumHeight(70);
 
+    // Create answer grid layout
     auto answersLayout = new QGridLayout();
     answersLayout->addWidget(B1, 1, 0);
     answersLayout->addWidget(B2, 1, 1);
     answersLayout->addWidget(B3, 2, 0);
     answersLayout->addWidget(B4, 2, 1);
 
-    mainLayout->addWidget(headWidget,0,Qt::AlignCenter);
+    // Build final layout
+    mainLayout->addWidget(headWidget, 0, Qt::AlignCenter);
     mainLayout->addSpacing(15);
     mainLayout->addWidget(questionLabel);
     mainLayout->addSpacing(15);
     mainLayout->addLayout(answersLayout);
     mainLayout->setContentsMargins(100, 80, 100, 80);
     setLayout(mainLayout);
-}
-
-template <typename T>
-void MainWindow::clearWidgets()
-{
-    QList<T *> widgets = this->findChildren<T *>();
-    for (T *widget : widgets)
-    {
-        widget->hide();
-        widget->deleteLater();
-    }
 }
 
 void MainWindow::onAnswerBoxClicked(AnswerBox *box)
@@ -548,121 +634,57 @@ void MainWindow::onAnswerBoxClicked(AnswerBox *box)
     }
 }
 
-QString MainWindow::generateQuestion(QString domain){
-    QLabel *question = new QLabel("Question in the domain of: ");
-    question->setText(question->text() + domain);
-    return question->text();
+QJsonObject MainWindow::generateQuestion(QString domain, int session) {
+    QVector<QJsonObject> questions = geminiAI->getQuestionsFromDB();
+
+    if (questions.isEmpty()) {
+        qDebug() << "❌ No questions available in the database.";
+        QJsonObject q;
+        q["question"] = "No questions available.";
+        return q;
+    }
+
+    QJsonObject q = questions.last();
+
+    qDebug() << "Domain of the question:" << q["domain"].toString();
+    qDebug() << "? Question:" << q["question"].toString();
+    qDebug() << "# Options:" << q["options"].toArray();
+    qDebug() << "$ Correct answer:" << q["correct_answer"].toString();
+
+    return q;
 }
 
-void MainWindow::on_settingsBtn_clicked()
-{
-    SettingsDialog settingsDialog(this);
-    settingsDialog.exec();
-}
-
+// Info and Stats Pages
 void MainWindow::on_infoBtn_clicked()
 {
     deleteButtons({ui->startBtn, ui->statsBtn, ui->infoBtn, ui->settingsBtn});
     ui->label->deleteLater();
 
-    backbutton = new QPushButton(this);
-    backbutton->setText(" <    Back");
-    backbutton->setCursor(Qt::PointingHandCursor);
-    backbutton->setMinimumSize(80, 30);
-    backbutton->setStyleSheet("QPushButton{"
-                              "background-color:transparent;"
-                              "border:1px solid white;"
-                              "border-radius: 10px;"
-                              "}"
-                              "QPushButton:hover{"
-                              "background-color:rgba(255,255,255,0.5);"
-                              "}");
-    backbutton->setMinimumWidth(100);
-    backbutton->setGeometry(width()/7,height()/6,90,30);
-    backbutton->show();
-    connect(backbutton, &QPushButton::clicked, this, &MainWindow::onBackButtonClicked);
+    createBackButton();
 
     auto infoHead = createLabel("Instructions", 28, Qt::AlignCenter);
     applyShadowEffect(infoHead, BUTTON_SHADOW_BLUR_RADIUS, SHADOW_COLOR);
 
-
     // Instructions content
-    QString instructions =
-        "<h2><b style='font-size:100px;'>Instructions for QuizGame</b></h2>"
-        "<h3 style='color:yellow;'>Basic Game Setup</h3>"
-        "<ul>"
-        "<li style='text-align:left;'>Click on the <b>Start Game</b> button on the home screen</li>"
-        "<li style='text-align:left;'>Choose your <b>quiz Domain</b></li>"
-        "<li style='text-align:left;'>Select difficulty level (<b>Easy</b>, <b>Medium</b>, <b>Hard</b>)</li>"
-        "</ul>"
-
-        "<h3 style='color:yellow;'>Gameplay Instructions</h3>"
-        "<b>1 - Quiz Flow: </b><br>"
-        "<ul>"
-        "<li style='text-align:left;'>Each question will appear one at a time</li>"
-        "<li style='text-align:left;'>Read the question carefully</li>"
-        "<li style='text-align:left;'>Select your answer from the multiple-choice options</li>"
-        "<li  style='text-align:left;'>A timer may count down for each question</li>"
-        "</ul>"
-
-        "<b>2 - Scoring System:</b><br>"
-        "<ul>"
-        "<li style='text-align:left;'><span style='color:white;'>Correct answers: +10 points</span></li>"
-        "<li style='text-align:left;'>Incorrect answers: 0 points</li>"
-        "<li style='text-align:left;'><span style='color:orange;'>Time bonus: +5 points</span> for answering within 5 seconds</li>"
-        "<li style= 'text-align:left;'><span style='color:orange;'>Streak bonus: +2 points</span> for each consecutive correct answer</li>"
-        "</ul>"
-
-        "<b>3 - Power-ups and Helps:</b><br>"
-        "<ul>"
-        "<li style='text-align:left;'><b> 50/50</b>: Eliminates two incorrect answers</li>"
-        "<li style='text-align:left;'><b> Time Freeze</b>: Pauses the timer for 10 seconds</li>"
-        "<li style='text-align:left;'><b> Hint</b>: Provides a clue about the correct answer</li>"
-        "<li style='text-align:left;'><b> Skip</b>: Skip the current question without penalty</li>"
-        "<li style='text-align:left;'><i>Each help option can only be used once per game</i></li>"
-        "</ul>"
-
-        "<b>4 - Special Item</b>:<br>"
-        "<ul>"
-        "<li style='text-align:left;'><b>Bomb</b>: After clicking on this icon. A bomb is generated in the answer section.</li>"
-        "<li style='text-align:left;'>The bomb will explode randomly and eliminate one of the wrong answers.</li>"
-        "</ul>"
-
-        "<h3 style='color:yellow;'>End of Game</h3>"
-        "<ul>"
-        "<li style='text-align:left;'>View your final score</li>"
-        "<li style='text-align:left;'>See correct answers for missed questions</li>"
-        "<li style='text-align:left;'><b>Play Again</b>: Start a new game with the same settings</li>"
-        "<li style='text-align:left;'><b>Return to Main Menu</b>: Exit to the home screen</li>"
-        "</ul>"
-
-        "<h3 style='color:yellow;'>Settings Options</h3>"
-        "<ul>"
-        "<li style='text-align:left;'>Toggle sound effects and background music</li>"
-        "<li style='text-align:left;'>Adjust difficulty level</li>"
-        "</ul>"
-        "<p style= 'text-align:center;font-size:15px;'>©Ayoub, All rights reserved 2025 </p><br>";
-
+    QString instructions = createInstructionsContent();
 
     QLabel *instructionsLabel = new QLabel(instructions);
     instructionsLabel->setWordWrap(true);
     instructionsLabel->setTextFormat(Qt::RichText);
-    instructionsLabel->setStyleSheet("font-size: 16px; color: white; background-color: transparent;"); // Transparent background
-    instructionsLabel->setAlignment(Qt::AlignLeft); // Align text to the left
-
+    instructionsLabel->setStyleSheet("font-size: 16px; color: white; background-color: transparent;");
+    instructionsLabel->setAlignment(Qt::AlignLeft);
 
     QScrollArea *scrollArea = new QScrollArea;
     scrollArea->setWidgetResizable(true);
-    scrollArea->setStyleSheet("background-color: transparent; border: none;"); // Transparent ScrollArea
+    scrollArea->setStyleSheet("background-color: transparent; border: none;");
 
     QWidget *scrollContent = new QWidget();
-    scrollContent->setStyleSheet("background-color: transparent;"); // Transparent content widget
+    scrollContent->setStyleSheet("background-color: transparent;");
     QVBoxLayout *scrollLayout = new QVBoxLayout(scrollContent);
     scrollLayout->addWidget(instructionsLabel);
     scrollContent->setLayout(scrollLayout);
     scrollArea->setWidget(scrollContent);
     scrollLayout->setAlignment(Qt::AlignCenter);
-
 
     auto infoHeadLayout = new QHBoxLayout();
     infoHeadLayout->addWidget(infoHead, Qt::AlignCenter);
@@ -671,21 +693,72 @@ void MainWindow::on_infoBtn_clicked()
     infoheadwid->setLayout(infoHeadLayout);
     infoheadwid->setMinimumWidth(600);
 
-    //Create Layout
-
-    auto infosLayout = new QVBoxLayout(); // Changed to QVBoxLayout to handle multiple rows
-
+    auto infosLayout = new QVBoxLayout();
     infosLayout->addWidget(scrollArea);
 
     auto mainLayout = new QVBoxLayout();
     replaceCentralWidgetLayout(mainLayout);
-
-    mainLayout->addWidget(infoheadwid,0,Qt::AlignCenter);
-
+    mainLayout->addWidget(infoheadwid, 0, Qt::AlignCenter);
     mainLayout->addLayout(infosLayout);
-
     mainLayout->setContentsMargins(100, 100, 100, 100);
+}
 
+QString MainWindow::createInstructionsContent()
+{
+    return "<h2><b style='font-size:100px;'>Instructions for QuizGame</b></h2>"
+           "<h3 style='color:yellow;'>Basic Game Setup</h3>"
+           "<ul>"
+           "<li style='text-align:left;'>Click on the <b>Start Game</b> button on the home screen</li>"
+           "<li style='text-align:left;'>Choose your <b>quiz Domain</b></li>"
+           "<li style='text-align:left;'>Select difficulty level (<b>Easy</b>, <b>Medium</b>, <b>Hard</b>)</li>"
+           "</ul>"
+
+           "<h3 style='color:yellow;'>Gameplay Instructions</h3>"
+           "<b>1 - Quiz Flow: </b><br>"
+           "<ul>"
+           "<li style='text-align:left;'>Each question will appear one at a time</li>"
+           "<li style='text-align:left;'>Read the question carefully</li>"
+           "<li style='text-align:left;'>Select your answer from the multiple-choice options</li>"
+           "<li  style='text-align:left;'>A timer may count down for each question</li>"
+           "</ul>"
+
+           "<b>2 - Scoring System:</b><br>"
+           "<ul>"
+           "<li style='text-align:left;'><span style='color:white;'>Correct answers: +10 points</span></li>"
+           "<li style='text-align:left;'>Incorrect answers: 0 points</li>"
+           "<li style='text-align:left;'><span style='color:orange;'>Time bonus: +5 points</span> for answering within 5 seconds</li>"
+           "<li style= 'text-align:left;'><span style='color:orange;'>Streak bonus: +2 points</span> for each consecutive correct answer</li>"
+           "</ul>"
+
+           "<b>3 - Power-ups and Helps:</b><br>"
+           "<ul>"
+           "<li style='text-align:left;'><b> 50/50</b>: Eliminates two incorrect answers</li>"
+           "<li style='text-align:left;'><b> Time Freeze</b>: Pauses the timer for 10 seconds</li>"
+           "<li style='text-align:left;'><b> Hint</b>: Provides a clue about the correct answer</li>"
+           "<li style='text-align:left;'><b> Skip</b>: Skip the current question without penalty</li>"
+           "<li style='text-align:left;'><i>Each help option can only be used once per game</i></li>"
+           "</ul>"
+
+           "<b>4 - Special Item</b>:<br>"
+           "<ul>"
+           "<li style='text-align:left;'><b>Bomb</b>: After clicking on this icon. A bomb is generated in the answer section.</li>"
+           "<li style='text-align:left;'>The bomb will explode randomly and eliminate one of the wrong answers.</li>"
+           "</ul>"
+
+           "<h3 style='color:yellow;'>End of Game</h3>"
+           "<ul>"
+           "<li style='text-align:left;'>View your final score</li>"
+           "<li style='text-align:left;'>See correct answers for missed questions</li>"
+           "<li style='text-align:left;'><b>Play Again</b>: Start a new game with the same settings</li>"
+           "<li style='text-align:left;'><b>Return to Main Menu</b>: Exit to the home screen</li>"
+           "</ul>"
+
+           "<h3 style='color:yellow;'>Settings Options</h3>"
+           "<ul>"
+           "<li style='text-align:left;'>Toggle sound effects and background music</li>"
+           "<li style='text-align:left;'>Adjust difficulty level</li>"
+           "</ul>"
+           "<p style= 'text-align:center;font-size:15px;'>©Ayoub, All rights reserved 2025 </p><br>";
 }
 
 void MainWindow::on_statsBtn_clicked(){
@@ -948,6 +1021,12 @@ void MainWindow::pausewindow(){
     overlayLayout->addLayout(buttonslayout);
 }
 
+void MainWindow::on_settingsBtn_clicked()
+{
+    SettingsDialog settingsDialog(this);
+    settingsDialog.exec();
+}
+
 void MainWindow::updateVolume(int value) {
     volumetxt->setText(QString("Volume: %1%").arg(value));
     // If using QMediaPlayer for sound
@@ -970,25 +1049,32 @@ void MainWindow::on_restartBtn_clicked(){
     timer->setTimeRemaining(10);
     pauseOverlay->hide();
 }
-void MainWindow::connectToDatabase() {
+bool MainWindow::connectToDatabase()
+{
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName("mydatabase.db");
 
     if (!db.open()) {
         qDebug() << "❌ Error: Could not open database" << db.lastError();
-    } else {
-        createMcqTable();
+        return false;
     }
+
+    if (!createMcqTable()) {
+        qDebug() << "❌ Error: Could not create table";
+        return false;
+    }
+
+    return true;
 }
-void MainWindow::updateResponse(const QString &response) {
-    qDebug() << response;
-}
-bool MainWindow::createMcqTable() {
+
+bool MainWindow::createMcqTable()
+{
     QSqlQuery query;
     QString createTableQuery = R"(
         CREATE TABLE IF NOT EXISTS mcq_questions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             question TEXT,
+            domain TEXT,
             option1 TEXT,
             option2 TEXT,
             option3 TEXT,
@@ -1005,4 +1091,3 @@ bool MainWindow::createMcqTable() {
     qDebug() << " Table mcq_questions is ready.";
     return true;
 }
-
