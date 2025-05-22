@@ -486,6 +486,7 @@ void MainWindow::generateQuestionsForDomain(const QString &domain)
             loadingLabel->hide();
         }
         startQuizSession(domain, sessionId);
+
     });
 }
 
@@ -547,10 +548,10 @@ void MainWindow::setupQuizLayout(const QString &domain, int sessionId)
     questionLabel->setWordWrap(true);
 
     // Create answer boxes
-    auto B1 = new AnswerBox("Option1", "A", -1, this);
-    auto B2 = new AnswerBox("Option2", "B", -1, this);
-    auto B3 = new AnswerBox("Option3", "C", -1, this);
-    auto B4 = new AnswerBox("Option4", "D", -1, this);
+    auto B1 = new AnswerBox(question["options"][0].toString(), "A", -1, this);
+    auto B2 = new AnswerBox(question["options"][1].toString(), "B", -1, this);
+    auto B3 = new AnswerBox(question["options"][2].toString(), "C", -1, this);
+    auto B4 = new AnswerBox(question["options"][3].toString(), "D", -1, this);
 
     connect(B1, &AnswerBox::clicked, this, &MainWindow::onAnswerBoxClicked);
     connect(B2, &AnswerBox::clicked, this, &MainWindow::onAnswerBoxClicked);
@@ -926,14 +927,15 @@ void MainWindow::pausewindow(){
     QVBoxLayout *overlayLayout = new QVBoxLayout(pausecontainer);
     pausecontainer->setLayout(overlayLayout); // **Important!**
 
-    // exit btn
-    exitBtn=new QPushButton(pausecontainer);
+    // exit Btn
+    exitBtn = new QPushButton(pausecontainer);
     exitBtn->setIcon(QIcon(ICON_PATH + "exit.png"));
     exitBtn->setStyleSheet(BUTTON_STYLE);
     exitBtn->setIconSize(QSize(BUTTON_ICON_SIZE, BUTTON_ICON_SIZE));
     exitBtn->setGeometry(pausecontainer->width()/17,pausecontainer->height()/13,BUTTON_ICON_SIZE+10,BUTTON_ICON_SIZE+10);
     exitBtn->setCursor(Qt::PointingHandCursor);
-    connect(exitBtn,&QPushButton::clicked,this,&MainWindow::onBackButtonClicked);
+    exitBtn->setMinimumSize(80, 30);
+    connect(exitBtn, &QPushButton::clicked, this, &MainWindow::onBackButtonClicked);
     exitBtn->show();
 
     // info btn

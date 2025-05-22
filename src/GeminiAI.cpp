@@ -79,8 +79,8 @@ void GeminiAI::askQuestion(const QString &question, QString domain) {
         qDebug() << "📄 Réponse brute :" << responseData;
         reply->deleteLater();
 
-        processTextResponse(responseData);
         processJsonQuestionsResponse(responseData,domain);
+        processTextResponse(responseData);
     });
 }
 
@@ -243,7 +243,8 @@ QVector<QJsonObject> GeminiAI::getQuestionsFromDB() {
         return questions;
     }
 
-    QSqlQuery query("SELECT question,domain, option1, option2, option3, option4, correct_answer FROM mcq_questions", db);
+    // To get the last questions stored, order by rowid descending
+    QSqlQuery query("SELECT question,domain, option1, option2, option3, option4, correct_answer FROM mcq_questions ORDER BY rowid DESC LIMIT 5", db);
     if (!query.exec()) {
         qDebug() << "❌ Erreur lors de l'exécution de la requête SELECT :" << query.lastError().text();
         return questions;
@@ -254,7 +255,6 @@ QVector<QJsonObject> GeminiAI::getQuestionsFromDB() {
         questionObj["question"] = query.value(0).toString();
 
         QJsonArray options;
-
         options.append(query.value(2).toString());
         options.append(query.value(3).toString());
         options.append(query.value(4).toString());
@@ -265,8 +265,7 @@ QVector<QJsonObject> GeminiAI::getQuestionsFromDB() {
         questionObj["correct_answer"] = query.value(6).toString();
 
         questions.append(questionObj);
+        qDebug() << "✅ Question récupérée :" << questionObj;
     }
-
-    qDebug() << "✅" << questions.size() << "questions récupérées depuis la base de données.";
     return questions;
 }

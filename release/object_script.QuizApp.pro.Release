@@ -1,3 +1,4 @@
+release/geminiai.o
 release/answerbox.o
 release/circletimer.o
 release/hovereffect.o
@@ -7,6 +8,7 @@ release/questionsgenerator.o
 release/settingsdialog.o
 release/typingeffect.o
 release/qrc_resources.o
+release/moc_geminiai.o
 release/moc_answerbox.o
 release/moc_circletimer.o
 release/moc_hovereffect.o

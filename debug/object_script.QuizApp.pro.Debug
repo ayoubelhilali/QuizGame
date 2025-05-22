@@ -1,3 +1,4 @@
+debug/geminiai.o
 debug/answerbox.o
 debug/circletimer.o
 debug/hovereffect.o
@@ -7,6 +8,7 @@ debug/questionsgenerator.o
 debug/settingsdialog.o
 debug/typingeffect.o
 debug/qrc_resources.o
+debug/moc_geminiai.o
 debug/moc_answerbox.o
 debug/moc_circletimer.o
 debug/moc_hovereffect.o
