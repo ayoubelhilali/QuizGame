@@ -4,6 +4,7 @@
 AnswerBox::AnswerBox(QString t, QString l, int c, QWidget *parent)
     : QWidget(parent), text(t), letter(l), correct(c)
 {
+    L=l;
     // Background Label
     backgroundLbl = new QLabel(this);
     QPixmap pixmap(":/Icons/answer.svg");
@@ -39,9 +40,10 @@ void AnswerBox::mousePressEvent(QMouseEvent *event)
     emit clicked(this);
 }
 
-bool AnswerBox::checkcorrect()
+bool AnswerBox::checkcorrect(QString correct_answer)
 {
-    if (correct)
+    // get the answer
+    if (getText()==correct_answer)
     {
         return 1;
     }

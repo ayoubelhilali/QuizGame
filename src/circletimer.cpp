@@ -5,7 +5,7 @@
 #include <QFont>
 #include <QDebug>
 
-CircleTimer::CircleTimer(QWidget *parent) : QWidget(parent), timeRemaining(10), color(QColor(0, 255, 0)) {
+CircleTimer::CircleTimer(QWidget *parent) : QWidget(parent), timeRemaining(15), color(QColor(0, 255, 0)) {
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &CircleTimer::updateTimer);
 }
@@ -18,8 +18,8 @@ void CircleTimer::stopTimer() {
     timer->stop();  // Start timer with 1-second intervals
 }
 
+//In circletimer.cpp
 void CircleTimer::updateTimer() {
-    // Get reference to MainWindow (assuming it's the top-level parent)
     MainWindow *mainWin = nullptr;
     QObject *parentObj = this->parent();
     while (parentObj) {
@@ -28,29 +28,62 @@ void CircleTimer::updateTimer() {
         parentObj = parentObj->parent();
     }
 
+    if (!mainWin) return; // Exit if MainWindow is not found
+
     if (timeRemaining > 0) {
         timeRemaining--;
         update();  // Refresh UI
         if (this->gettime() <= 3) {
-            setProgressColor(QColor(255, 0, 0));  // Change color to red
+            setProgressColor(QColor(255, 0, 0));
         }else{
             setProgressColor(QColor(0, 255, 0));
         }
     } else {
-        if (mainWin) {  // Ensure mainWin is valid
+        if (mainWin) {
             for (auto answers : mainWin->findChildren<AnswerBox *>()) {
-                answers->setEnabled(false);  // Disable buttons
-                if(answers->getclicked()==1){
-                    answers->showresult(answers->checkcorrect());
+                if (answers->getLetter() == "E") {
+                    correctAnswer = answers->getText(); // Save it for later
+                    break;
                 }
             }
+
+            for (auto answers : mainWin->findChildren<AnswerBox *>()) {
+                answers->setEnabled(false);
+                if (answers->getclicked() == 1) {
+                    answers->showresult(answers->checkcorrect(correctAnswer));
+                }
+            }
+            for (auto answers : mainWin->findChildren<AnswerBox *>()) {
+                answers->setEnabled(false);
+                answers->showresult(answers->checkcorrect(correctAnswer));
+            }
+            //✅ Modify onTimerFinished
+            QTimer::singleShot(2000, this, [mainWin]() {
+                int currentIndex = mainWin->getCurrentQuestionIndex();
+                QVector<QJsonObject> quizQuestions = mainWin->getQuizQuestions();
+
+                if (currentIndex < quizQuestions.size() - 1) {
+                    mainWin->setCurrentQuestionIndex(currentIndex+1);
+                    mainWin->displayQuestion(mainWin->getCurrentQuestionIndex());
+                } else {
+                    mainWin->endQuizSession();
+                }
+            });
         }
         if (timer) {  // Ensure timer is valid
             timer->stop();
         }
+        emit timeout();  // Emit the signal when time runs out
         // Check the last clicked button
     }
 }
+
+void CircleTimer::onTimerFinished() {
+    setTimeRemaining(15);
+    // Get reference to MainWindow (assuming it's the top-level parent)
+}
+
+
 
 void CircleTimer::setProgressColor(QColor c=QColor(0, 255,0)){
     color=c;
@@ -78,7 +111,7 @@ void CircleTimer::paintEvent(QPaintEvent *event) {
     QPen pen(this->getProgressColor(), 4);  // Green progress arc
     painter.setPen(pen);
 
-    int angle = (timeRemaining / 10.0) * 360 * 16;  // Convert to degrees (16x for Qt)
+    int angle = (timeRemaining / 15.0) * 360 * 16;  // Convert to degrees (16x for Qt)
     painter.drawArc(rect, 90 * 16, -angle);  // Start from top
 
     // Draw the timer text

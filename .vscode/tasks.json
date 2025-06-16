@@ -1,16 +1,19 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-      {
-        "label": "qmake & make",
-        "type": "shell",
-        "command": "qmake && make",
-        "group": {
-          "kind": "build",
-          "isDefault": true
-        },
-        "problemMatcher": ["$gcc"]
-      }
-    ]
-  }
-  
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Qt Project",
+      "type": "shell",
+      "command": "cmd.exe",
+      "args": [
+        "/c",
+        "set PATH=C:\\Qt\\Tools\\mingw1310_64\\bin;%PATH% && qmake && make"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

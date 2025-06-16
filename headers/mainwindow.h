@@ -7,6 +7,7 @@
 #include <QProgressBar>
 #include <QLabel>
 #include <QSlider>
+#include <QPointer>
 #include <memory>
 #include <QSqlDatabase>
 #include <QJsonObject>
@@ -28,8 +29,20 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
+    QJsonObject getQuestion(){return question;};
     ~MainWindow();
-
+    // ... existing public members ...
+    int getCurrentQuestionIndex() const { return currentQuestionIndex; }
+    void setCurrentQuestionIndex(int index) { currentQuestionIndex = index; }
+    QVector<QJsonObject> getQuizQuestions() const { return quizQuestions; } // Getter for the questions list
+    void displayQuestion(int index); // New function to display a question
+    void endQuizSession(); // New function to handle the end of the quiz
+    void handleAnswer(bool isCorrect); // function to handle answers
+    void updateScoreDisplay();
+    void saveHighScore(int newScore);
+    void cleanupQuizWidgets();
+    void showDomainSelectionScreen();
+    void cleanupQuizSession();
 protected:
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
@@ -62,7 +75,6 @@ private:
     void questionsPage(const QString &domain, int QstNum);
     void startProgressBar(QProgressBar *progressBar, QLabel *waitLabel, TypingAnimation *typing);
     QJsonObject generateQuestion(QString domain, int session);
-    void showDomainSelectionScreen();
     QString getDomainFromButton(QPushButton *button);
     void generateQuestionsForDomain(const QString &domain);
     void startQuizSession(const QString &domain, int session);
@@ -78,11 +90,15 @@ private:
                                           QLabel *score, QLabel *questionLabel,
                               AnswerBox *B1, AnswerBox *B2, AnswerBox *B3, AnswerBox *B4);
 
+    int currentQuestionIndex = 0; // Index of the current question
+    QVector<QJsonObject> quizQuestions; // All questions for this session
+
 
     // Widget Creators
     QProgressBar *createProgressBar();
     QLabel *createLabel(const QString &text, int fontSize, Qt::Alignment alignment);
     QPushButton *createDomainButton(const QString &iconName);
+    QPointer<QWidget> m_endQuizContainer;
 
     // Pause Menu
     void pausewindow();
@@ -95,11 +111,9 @@ private:
 
     // UI Components
     std::unique_ptr<Ui::MainWindow> ui;
-    QPushButton *pauseBtn = nullptr;
     QPushButton *exitBtn = nullptr;
-    QPushButton *backbutton = nullptr;
     QPushButton *infoBtn;
-    CircleTimer *timer = nullptr;
+    QGridLayout *answersLayout = nullptr;
 
     // Pause Menu Components
     QWidget *pauseOverlay = nullptr;
@@ -122,6 +136,24 @@ private:
     int fastestTime = -1;
     int totalCorrectAnswers = 0;
     int totalIncorrectAnswers = 0;
+    int currentScore = 0;
+    int correctStreak = 0;
+    QTime answerTime; // To track when question was displayed
+    QLabel* scoreLabel = nullptr; // Pointer to the score display label
+
+    // variables
+    int sessionId = 0;
+    QJsonObject question;
+
+    QLabel *score;
+    // For quiz end container
+    QPointer<QPushButton> backbutton;      // Use QPointer for automatic nulling
+    CircleTimer *timer = nullptr;        // For timer object
+    QPointer<QPushButton> pauseBtn;        // For pause button
+    QTimer* m_cleanupTimer = nullptr;
+    QWidget* m_resultsContainer = nullptr;
+    TypingAnimation* typingEffect = nullptr;
+
 };
 
 #endif // MAINWINDOW_H

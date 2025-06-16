@@ -29,7 +29,7 @@ private slots:
     void updateText() {
         dotCount = (dotCount + 1) % 4; // 0 to 3 dots
         QString dots(dotCount, '.');
-        label->setText(baseText + dots);
+        //label->setText(baseText + dots);
     }
 
 private:

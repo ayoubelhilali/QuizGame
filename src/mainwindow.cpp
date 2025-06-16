@@ -15,9 +15,13 @@
 #include <QJsonArray>
 #include <QSqlDatabase>
 #include <QSqlQuery>
+#include <QPropertyAnimation>
+#include <QSettings>
+
 
 #include "headers/mainwindow.h"
 #include "headers/settingsdialog.h"
+
 #include "qevent.h"
 #include "ui_mainwindow.h"
 #include "headers/hovereffect.h"
@@ -111,7 +115,6 @@ void MainWindow::applyShadowEffect(QWidget *widget, int blurRadius, const QColor
     if (widget->graphicsEffect()) {
         delete widget->graphicsEffect();
     }
-
     auto shadowEffect = new QGraphicsDropShadowEffect(widget);
     shadowEffect->setBlurRadius(blurRadius);
     shadowEffect->setColor(color);
@@ -308,11 +311,11 @@ void MainWindow::startProgressBar(QProgressBar *progressBar, QLabel *waitLabel, 
 
 void MainWindow::createBackButton()
 {
-    if (backbutton) {
-        backbutton->deleteLater();
-    }
+
+
 
     backbutton = new QPushButton(this);
+    backbutton->setObjectName("backButton");  // Important for safe lookup
     backbutton->setText(" <    Back");
     backbutton->setCursor(Qt::PointingHandCursor);
     backbutton->setMinimumSize(80, 30);
@@ -326,6 +329,7 @@ void MainWindow::createBackButton()
                               "}");
     backbutton->setMinimumWidth(100);
     connect(backbutton, &QPushButton::clicked, this, &MainWindow::onBackButtonClicked);
+    backbutton->setGeometry(width()/7,height()/6,90,30);
     backbutton->show();
 }
 
@@ -366,7 +370,6 @@ void MainWindow::showDomainSelectionScreen()
 void MainWindow::setupDomainSelectionLayout(QLabel *domainHead, QPushButton *buttons[])
 {
     auto domainHeadLayout = new QHBoxLayout();
-    domainHeadLayout->addWidget(backbutton, Qt::AlignLeft);
     domainHeadLayout->addWidget(domainHead, Qt::AlignCenter);
 
     QWidget *domainheadwid = new QWidget(this);
@@ -426,24 +429,46 @@ void MainWindow::onDomainButtonClicked()
         delete pauseBtn;
     if (timer)
         delete timer;
-
     QPushButton *clickedButton = qobject_cast<QPushButton *>(sender());
     if (!clickedButton)
         return;
-
     QString domain = getDomainFromButton(clickedButton);
 
-    // Create loading indicator
+    // Create loading indicator with Retro Gaming Style
     loadingLabel = new QLabel("Loading", this);
     loadingLabel->setAlignment(Qt::AlignCenter);
-    loadingLabel->setStyleSheet("font-size: 20px; color: white;");
+    loadingLabel->setStyleSheet(
+        "QLabel {"
+        "   font-family: 'Courier New', 'Monaco', monospace;"
+        "   font-size: 20px;"
+        "   font-weight: bold;"
+        "   color: #00ff00;"      // Bright green
+        "   border-radius: 4px;"
+        "   padding: 12px 20px;"
+        "   text-shadow: 0 0 8px #00ff00;"
+        "   text-align:right;"
+        "}"
+        );
 
-    // Position loading label
+    // Add glow effect animation
+    QGraphicsOpacityEffect* opacityEffect = new QGraphicsOpacityEffect(loadingLabel);
+    loadingLabel->setGraphicsEffect(opacityEffect);
+    QPropertyAnimation* pulseAnimation = new QPropertyAnimation(opacityEffect, "opacity");
+    pulseAnimation->setDuration(800);
+    pulseAnimation->setStartValue(0.4);
+    pulseAnimation->setEndValue(1.0);
+    pulseAnimation->setEasingCurve(QEasingCurve::InOutQuad);
+    pulseAnimation->setLoopCount(-1);
+    pulseAnimation->start();
+
+    // Position loading label (calculate after styling for proper size)
+    loadingLabel->adjustSize();
     int x = (this->width() - loadingLabel->width()) / 2;
     int y = (this->height() - loadingLabel->height()) / 2;
-    loadingLabel->setGeometry(x, y, loadingLabel->width(), loadingLabel->height());
+    loadingLabel->setGeometry(x,y,loadingLabel->width()+70,loadingLabel->height());
 
-    TypingAnimation *typingEffect = new TypingAnimation(loadingLabel, loadingLabel->text(), 200, this);
+    // Create typing animation with retro feel
+    typingEffect = new TypingAnimation(loadingLabel, "Loading...", 180, this);
     typingEffect->start();
     loadingLabel->show();
 
@@ -479,21 +504,35 @@ void MainWindow::generateQuestionsForDomain(const QString &domain)
     geminiAI->askQuestion(prompt, domain);
     qDebug() << "Generating questions for domain: " << domain;
 
-    int sessionId = 0;
     connect(geminiAI, &GeminiAI::responseReceived, this, [=]() {
         qDebug() << "GeminiAI response received! Now loading questions.";
         if (loadingLabel) {
             loadingLabel->hide();
+            typingEffect->stop();
         }
-        startQuizSession(domain, sessionId);
-
+            startQuizSession(domain, sessionId+1);
     });
 }
 
-void MainWindow::startQuizSession(const QString &domain, int session)
-{
+
+void MainWindow::startQuizSession(const QString &domain, int session) {
+    // Reset score and streak for new session
+    currentScore = 0;
+    correctStreak = 0;
+    // sav
     createPauseButton();
-    setupQuizLayout(domain, session);
+    quizQuestions.clear(); // Clear previous questions, if any
+    quizQuestions = geminiAI->getQuestionsFromDB(); // Retrieve *all* questions
+    currentQuestionIndex = 0; // Start at the first question
+
+    if (quizQuestions.isEmpty()) {
+        QMessageBox::warning(this, "No Questions", "No questions found for this domain.");
+        return;  // Stop the quiz if there are no questions
+    }
+
+    setupQuizLayout(domain, session); // Initial UI setup.
+    displayQuestion(currentQuestionIndex); // display the first question
+
 }
 
 void MainWindow::createPauseButton()
@@ -517,9 +556,12 @@ void MainWindow::createPauseButton()
     connect(pauseBtn, &QPushButton::clicked, this, &MainWindow::onPauseClicked);
 }
 
-void MainWindow::setupQuizLayout(const QString &domain, int sessionId)
+// 2.2 - Change setupQuizLayout to setup the GridLayout
+void MainWindow::setupQuizLayout(const QString &domain, int session)
 {
-    // Create header elements
+    // Check for existing layout
+    // Create header elements (domain name, score, timer)
+    // These are STATIC and won't change with each question
     auto domainNameTxt = createLabel("Domain: ", 10, Qt::AlignLeft);
     domainNameTxt->setStyleSheet("color:yellow; font: 9pt '8514oem';");
 
@@ -530,38 +572,421 @@ void MainWindow::setupQuizLayout(const QString &domain, int sessionId)
     timer = new CircleTimer(this);
     timer->setFixedSize(60, 60);
     timer->setStyleSheet("margin:14px;");
-    timer->startTimer();
     timer->show();
 
     // Create score display
     auto scoreTxt = createLabel("Score: ", 10, Qt::AlignRight);
     scoreTxt->setStyleSheet("color:yellow; font: 15pt 'Terminal';");
 
-    auto score = createLabel("100", 10, Qt::AlignRight);
+    score = createLabel("0", 10, Qt::AlignRight);
     score->setStyleSheet("font: 12pt 'Terminal';");
 
-    // Generate question and display
-    QJsonObject question = generateQuestion(domain, sessionId);
+    auto mainLayout = qobject_cast<QVBoxLayout *>(ui->centralwidget->layout());
+    if (!mainLayout)
+    {
+        mainLayout = new QVBoxLayout(ui->centralwidget);
+        ui->centralwidget->setLayout(mainLayout);
+    }
+
+
+    // Create domain and score widgets
+    auto domainwidget = new QWidget;
+    domainwidget->setFixedSize(200, 80);
+
+    auto scorewidget = new QWidget;
+    scorewidget->setFixedSize(180, 80);
+
+    // Create layouts
+    auto headLayout = new QHBoxLayout();
+    auto scorelayout = new QHBoxLayout(scorewidget);
+    auto domainlayout = new QHBoxLayout(domainwidget);
+
+    // Add widgets to domain layout
+    domainlayout->addWidget(domainNameTxt);
+    domainlayout->addWidget(domainName);
+
+    // Add widgets to score layout
+    scorelayout->addWidget(scoreTxt);
+    scorelayout->addWidget(score);
+    scorelayout->setAlignment(Qt::AlignRight);
+
+    // Add widgets to head layout
+    headLayout->addSpacing(20);
+    headLayout->addWidget(domainwidget, Qt::AlignLeft);
+    headLayout->addWidget(timer, Qt::AlignCenter);
+    headLayout->addWidget(scorewidget, Qt::AlignRight);
+    headLayout->addSpacing(20);
+
+    auto headWidget = new QWidget(this);
+    headWidget->setLayout(headLayout);
+    headWidget->setMinimumWidth(700);
+    headWidget->setMinimumHeight(70);
+
+    mainLayout->addWidget(headWidget, 0, Qt::AlignCenter);
+    mainLayout->addSpacing(15);
+
+    // Create answer grid layout
+    answersLayout = new QGridLayout(); // Here the magic starts
+    answersLayout->setSpacing(20);
+    mainLayout->addSpacing(15);
+    mainLayout->addLayout(answersLayout);
+    mainLayout->setContentsMargins(100, 80, 100, 80);
+}
+
+void MainWindow::displayQuestion(int index) {
+    // Clear existing widgets (question label, answer boxes)
+    clearWidgets<AnswerBox>();
+    if (auto label = findChild<QLabel*>("questionLabel"))
+        label->deleteLater();
+
+    // Check if index is within the valid range
+    if (index < 0 || index >= quizQuestions.size()) {
+        qDebug() << "Invalid question index: " << index;
+        endQuizSession(); // End the quiz if the index is out of bounds
+        return;
+    }
+
+    // Record when question is displayed
+    answerTime = QTime::currentTime();
+
+    if (timer) {
+        timer->setTimeRemaining(15); // Reset the timer
+        timer->startTimer(); // Restart timer
+        connect(timer, &CircleTimer::timeout, this, [this]() {
+            disconnect(timer, &CircleTimer::timeout, this, nullptr);
+            // Time's up - treat as incorrect answer
+            handleAnswer(false);
+        });
+    }
+    question = quizQuestions[index]; // Get the current question
+
+    // Create question label
     auto questionLabel = createLabel(question["question"].toString(), 15, Qt::AlignCenter);
     applyShadowEffect(questionLabel, SHADOW_BLUR_RADIUS, SHADOW_COLOR);
     questionLabel->setStyleSheet("font: 15pt 'Terminal';");
+    questionLabel->setMaximumWidth(700);
     questionLabel->setWordWrap(true);
+    questionLabel->setObjectName("questionLabel");  // Important for finding it later
 
     // Create answer boxes
-    auto B1 = new AnswerBox(question["options"][0].toString(), "A", -1, this);
-    auto B2 = new AnswerBox(question["options"][1].toString(), "B", -1, this);
-    auto B3 = new AnswerBox(question["options"][2].toString(), "C", -1, this);
-    auto B4 = new AnswerBox(question["options"][3].toString(), "D", -1, this);
+    AnswerBox *B5 = new AnswerBox(question["correct_answer"].toString(), "E", -1, this);
+    AnswerBox *B1 = new AnswerBox(question["options"][0].toString(), "A", -1, this);
+    AnswerBox *B2 = new AnswerBox(question["options"][1].toString(), "B", -1, this);
+    AnswerBox *B3 = new AnswerBox(question["options"][2].toString(), "C", -1, this);
+    AnswerBox *B4 = new AnswerBox(question["options"][3].toString(), "D", -1, this);
 
     connect(B1, &AnswerBox::clicked, this, &MainWindow::onAnswerBoxClicked);
     connect(B2, &AnswerBox::clicked, this, &MainWindow::onAnswerBoxClicked);
     connect(B3, &AnswerBox::clicked, this, &MainWindow::onAnswerBoxClicked);
     connect(B4, &AnswerBox::clicked, this, &MainWindow::onAnswerBoxClicked);
 
-    // Create layout
-    createQuizPageLayout(domainNameTxt, domainName, scoreTxt, score, questionLabel, B1, B2, B3, B4);
+    // Add to mainLayout
+    QVBoxLayout* mainLayout = qobject_cast<QVBoxLayout*>(ui->centralwidget->layout());
+    if (mainLayout) {
+        // Chercher l’index de answersLayout
+        int answersIndex = -1;
+        for (int i = 0; i < mainLayout->count(); ++i) {
+            QLayoutItem* item = mainLayout->itemAt(i);
+            if (item && item->layout() == answersLayout) {
+                answersIndex = i;
+                break;
+            }
+        }
+
+        if (answersIndex != -1) {
+            mainLayout->insertWidget(answersIndex, questionLabel);  // Question AVANT les réponses
+        } else {
+            mainLayout->addWidget(questionLabel); // Fallback
+        }
+
+        if (answersLayout) {
+            answersLayout->addWidget(B1, 1, 0);
+            answersLayout->addWidget(B2, 1, 1);
+            answersLayout->addWidget(B3, 2, 0);
+            answersLayout->addWidget(B4, 2, 1);
+        }
+
+        B1->show();
+        B2->show();
+        B3->show();
+        B4->show();
+    }
+
+    timer->startTimer();
 }
 
+void MainWindow::handleAnswer(bool isCorrect) {
+    // Calculate response time (seconds)
+    int responseTime = answerTime.secsTo(QTime::currentTime());
+    int pointsEarned = 0;
+
+    if (isCorrect) {
+        pointsEarned = 10; // Base points
+
+        // Time bonus (answered within 5 seconds)
+        if (responseTime <= 5) {
+            pointsEarned += 5;
+        }
+
+        // Streak bonus
+        if (correctStreak > 0) {
+            int streakBonus = 2 * correctStreak;
+            pointsEarned += streakBonus;
+        }
+
+        correctStreak++;
+    } else {
+        correctStreak = 0; // Reset streak on wrong answer
+    }
+
+    // Update score
+    currentScore += pointsEarned;
+    updateScoreDisplay();
+
+    // Create feedback label with rich styling
+    QLabel* feedbackLabel = new QLabel(this);
+    feedbackLabel->setAlignment(Qt::AlignCenter);
+    feedbackLabel->setAttribute(Qt::WA_DeleteOnClose);
+
+    // Base style with semi-transparent background
+    QString baseStyle = "QLabel {"
+                        "    font-family: 'Arial';"
+                        "    font-size: 18px;"
+                        "    font-weight: bold;"
+                        "    padding: 15px 25px;"
+                        "    border-radius: 15px;"
+                        "    margin: 5px;"
+                        "    background-color: rgba(0, 0, 0, 150);"  // Semi-transparent black background
+                        "}";
+
+    // Conditional styling based on correctness
+    if (isCorrect) {
+        feedbackLabel->setStyleSheet(baseStyle +
+                                     "color: #ffffff;"
+                                     "border: 2px solid #00ff00;");
+    } else {
+        feedbackLabel->setStyleSheet(baseStyle +
+                                     "color: #ffffff;"
+                                     "border: 2px solid #ff0000;");
+    }
+
+    // Add drop shadow for depth
+    QGraphicsDropShadowEffect* shadow = new QGraphicsDropShadowEffect(feedbackLabel);
+    shadow->setBlurRadius(15);
+    shadow->setOffset(3, 3);
+    shadow->setColor(QColor(0, 0, 0, 200));
+    feedbackLabel->setGraphicsEffect(shadow);
+
+    // Build the feedback text with HTML formatting
+    QString feedbackText = QString("<div style='text-align:center;'>"
+                                   "<p style='font-size:24px; margin-bottom:10px;'>"
+                                   "%1</p>"
+                                   "<p style='font-size:16px;'>"
+                                   "Base: %2</p>").arg(
+                                   isCorrect ? "✓ Correct!" : "✗ Incorrect",
+                                   isCorrect ? "+10" : "+0");
+
+    // Add time bonus if applicable
+    if (isCorrect && responseTime <= 5) {
+        feedbackText += QString("<p style='font-size:16px; color:%1;'>"
+                                "Speed Bonus: +5</p>").arg("#88ff88");
+    }
+
+    // Add streak bonus if applicable
+    if (isCorrect && correctStreak > 0) {
+        feedbackText += QString("<p style='font-size:16px; color:%1;'>"
+                                "Streak Bonus: +%2</p>").arg("#88ff88",
+                                 QString::number(2 * (correctStreak - (isCorrect ? 0 : 1))));
+    }
+
+    feedbackText += QString("<p style='font-size:20px; margin-top:10px; font-weight:bold; color:%1;'>"
+                            "Total: +%2</p></div>").arg(isCorrect ? "#00ff00" : "#ff0000",
+                             QString::number(pointsEarned));
+
+    feedbackLabel->setText(feedbackText);
+    feedbackLabel->adjustSize();
+
+    // Position the label centered above the answer boxes
+    int x = (width() - feedbackLabel->width()) / 2;
+    int y = height() / 2 - feedbackLabel->height() - 20;  // Position above center
+    feedbackLabel->move(x, y);
+    feedbackLabel->show();
+
+    // Animate the appearance
+    QPropertyAnimation* fadeIn = new QPropertyAnimation(feedbackLabel, "windowOpacity");
+    fadeIn->setDuration(500);
+    fadeIn->setStartValue(0);
+    fadeIn->setEndValue(1);
+    fadeIn->start(QAbstractAnimation::DeleteWhenStopped);
+
+    // Move to next question after delay
+    QTimer::singleShot(1500, this, [this, feedbackLabel]() {
+        feedbackLabel->deleteLater();
+        currentQuestionIndex++;
+        if (currentQuestionIndex < quizQuestions.size()) {
+            displayQuestion(currentQuestionIndex);
+        } else {
+            endQuizSession();
+        }
+    });
+}
+
+void MainWindow::updateScoreDisplay() {
+    if (score) {
+        score->setText(QString::number(currentScore));
+
+        // Simple animation using stylesheet changes
+        score->setStyleSheet("font: bold 20pt 'Terminal'; color: #00FF00;");
+        QTimer::singleShot(300, this, [this]() {
+            score->setStyleSheet("font: bold 20pt 'Terminal'; color: white;");
+        });
+    }
+}
+
+
+void MainWindow::saveHighScore(int newScore) {
+    QSettings settings("MyCompany", "MyApp");
+    // Get current high score (default to 0 if none exists)
+    int currentHigh = settings.value("highScore", 0).toInt();
+
+    // Update if new score is higher
+    if (newScore > currentHigh) {
+        settings.setValue("highScore", newScore);
+    }
+}
+
+
+void MainWindow::endQuizSession() {
+    QSettings settings("MyCompany", "MyApp");
+    int previousHigh = settings.value("highScore", 0).toInt();
+    bool isNewHighScore = (currentScore > previousHigh);
+
+    if (isNewHighScore) {
+        settings.setValue("highScore", currentScore);
+    }
+
+    // Create container with explicit lifetime management
+    QWidget* container = new QWidget();
+    container->setWindowFlags(Qt::Widget); // Ensure it's not a window
+    container->setGeometry(rect());
+    container->setParent(this); // Attach to main window
+    container->setAttribute(Qt::WA_DeleteOnClose); // Auto-delete when closed
+
+    // Create results label
+    QLabel* resultsLabel = new QLabel(container);
+    resultsLabel->setAlignment(Qt::AlignCenter);
+    resultsLabel->setWordWrap(true);
+
+    // Base style
+    QString style = "QLabel {"
+                    "    font-family: 'Arial';"
+                    "    font-size: 18px;"
+                    "    font-weight: bold;"
+                    "    padding: 15px 25px;"
+                    "    border-radius: 15px;"
+                    "    margin: 5px;"
+                    "    background-color: rgba(0, 0, 0, 150);"  // Semi-transparent black background
+                    "}";
+
+    // Add border based on score
+    if (isNewHighScore) {
+        style += "border: 3px solid #4CAF50;";
+    } else {
+        style += "border: 2px solid #2196F3;";
+    }
+    style += "}";
+
+    resultsLabel->setStyleSheet(style);
+
+    // Add shadow effect
+    QGraphicsDropShadowEffect* shadow = new QGraphicsDropShadowEffect(resultsLabel);
+    shadow->setBlurRadius(20);
+    shadow->setOffset(4, 4);
+    shadow->setColor(QColor(0, 0, 0, 200));
+    resultsLabel->setGraphicsEffect(shadow);
+
+    // Build the results text
+    QString resultsText = QString("<div style='text-align:center;'>"
+                                  "<p style='font-size:28px; margin-bottom:15px;'>"
+                                  "%1</p>"
+                                  "<p style='font-size:20px;'>Your score: <b>%2</b></p>"
+                                  "<p style='font-size:20px;'>High score: <b>%3</b></p>")
+                              .arg(isNewHighScore ? "🎉 New High Score! 🎉" : "Quiz Completed",
+                                   QString::number(currentScore),
+                                   QString::number(qMax(currentScore, previousHigh)));
+
+    if (isNewHighScore) {
+        resultsText += QString("<p style='font-size:24px; color:#4CAF50; margin-top:15px;'>"
+                               "Congratulations!</p>");
+    }
+    resultsText += "</div>";
+
+    resultsLabel->setText(resultsText);
+    resultsLabel->adjustSize();
+    resultsLabel->move((width() - resultsLabel->width())/2,
+                       (height() - resultsLabel->height())/3);
+
+    // Disable interactive elements
+    for (auto btn : findChildren<QPushButton*>()) btn->setEnabled(false);
+    for (auto box : findChildren<AnswerBox*>()) box->setEnabled(false);
+    if (timer) timer->stopTimer();
+
+    container->raise();
+    container->show();
+
+    // Use a member variable to track the container
+    m_endQuizContainer = container; // QPointer<QWidget> m_endQuizContainer; in header
+
+    // Capture by value, not reference
+    QTimer::singleShot(3000, this, [this]() {
+        this->cleanupQuizSession();
+    });
+}
+
+void MainWindow::cleanupQuizSession() {
+    // Safe cleanup method
+    if (m_endQuizContainer) {
+        m_endQuizContainer->close(); // Will trigger delete due to WA_DeleteOnClose
+        m_endQuizContainer = nullptr;
+    }
+
+    // Clear other widgets
+    clearWidgets<AnswerBox>();
+
+    if (pauseBtn) {
+        pauseBtn->deleteLater();
+        pauseBtn = nullptr;
+    }
+
+    if (timer) {
+        timer->deleteLater();
+        timer = nullptr;
+    }
+
+    if (backbutton) {
+        backbutton->deleteLater();
+        backbutton = nullptr;
+    }
+
+    // Clear central widget
+    QWidget* central = centralWidget();
+    if (central) {
+        QLayout* layout = central->layout();
+        if (layout) {
+            QLayoutItem* item;
+            while ((item = layout->takeAt(0))) {
+                if (QWidget* widget = item->widget()) {
+                    widget->setParent(nullptr);
+                    widget->deleteLater();
+                }
+                delete item;
+            }
+        }
+        // Don't delete the layout - it's owned by the central widget
+    }
+
+    showDomainSelectionScreen();
+}
 void MainWindow::createQuizPageLayout(QLabel *domainNameTxt, QLabel *domainName, QLabel *scoreTxt,
                                       QLabel *score, QLabel *questionLabel,
                                       AnswerBox *B1, AnswerBox *B2, AnswerBox *B3, AnswerBox *B4)
@@ -623,16 +1048,56 @@ void MainWindow::createQuizPageLayout(QLabel *domainNameTxt, QLabel *domainName,
     setLayout(mainLayout);
 }
 
-void MainWindow::onAnswerBoxClicked(AnswerBox *box)
-{
-    box->getTextlabel()->setStyleSheet("background-color:rgba(0,0,0,0.3);");
-    box->setclicked(1);
+void MainWindow::onAnswerBoxClicked(AnswerBox *box) {
+    // Disable all answer boxes to prevent multiple clicks
     for (auto btn : this->findChildren<AnswerBox *>()) {
-        if (btn != box) {
-            btn->getTextlabel()->setStyleSheet("");
-            btn->setclicked(0);
+        btn->setEnabled(false);
+    }
+
+    // Highlight the selected answer
+    box->getTextlabel()->setStyleSheet("background-color: rgba(0,0,0,0.3);");
+    box->setclicked(1);
+
+    // Highlight correct answer in green and incorrect ones in red
+    QString correctAnswer = question["correct_answer"].toString();
+    for (auto btn : this->findChildren<AnswerBox *>()) {
+        if (btn->getText() == correctAnswer) {
+            btn->getTextlabel()->setStyleSheet(
+                "background-color: rgba(0,255,0,100);"
+                "border: 2px solid #00FF00;"
+                );
+        } else {
+            btn->getTextlabel()->setStyleSheet(
+                "background-color: rgba(255,0,0,100);"
+                "border: 2px solid #FF0000;"
+                );
         }
     }
+
+    // Stop and disconnect the timer
+    if (timer) {
+        timer->stopTimer();
+        disconnect(timer, &CircleTimer::timeout, this, nullptr);
+    }
+
+    // Check if the selected answer is correct
+    bool isCorrect = (box->getText() == correctAnswer);
+
+    // Add visual feedback for the selected answer
+    if (isCorrect) {
+        box->getTextlabel()->setStyleSheet(
+            "background-color: rgba(0,255,0,150);"
+            "border: 3px solid #00FF00;"
+            );
+    } else {
+        box->getTextlabel()->setStyleSheet(
+            "background-color: rgba(255,0,0,150);"
+            "border: 3px solid #FF0000;"
+            );
+    }
+
+    // Process the answer
+    handleAnswer(isCorrect);
 }
 
 QJsonObject MainWindow::generateQuestion(QString domain, int session) {
@@ -645,14 +1110,14 @@ QJsonObject MainWindow::generateQuestion(QString domain, int session) {
         return q;
     }
 
-    QJsonObject q = questions.last();
+    QVector <QJsonObject> q = questions.mid(questions.size()-3,questions.size());
 
-    qDebug() << "Domain of the question:" << q["domain"].toString();
-    qDebug() << "? Question:" << q["question"].toString();
-    qDebug() << "# Options:" << q["options"].toArray();
-    qDebug() << "$ Correct answer:" << q["correct_answer"].toString();
+    qDebug() << "Domain of the question:" << q[session]["domain"].toString();
+    qDebug() << "? Question:" << q[session]["question"].toString();
+    qDebug() << "# Options:" << q[session]["options"].toArray();
+    qDebug() << "$ Correct answer:" << q[session]["correct_answer"].toString();
 
-    return q;
+    return q[session];
 }
 
 // Info and Stats Pages
@@ -766,22 +1231,7 @@ void MainWindow::on_statsBtn_clicked(){
     deleteButtons({ui->startBtn, ui->statsBtn, ui->infoBtn, ui->settingsBtn});
     ui->label->deleteLater();
 
-    backbutton = new QPushButton(this);
-    backbutton->setText(" <    Back");
-    backbutton->setCursor(Qt::PointingHandCursor);
-    backbutton->setMinimumSize(80, 30);
-    backbutton->setStyleSheet("QPushButton{"
-                              "background-color:transparent;"
-                              "border:1px solid white;"
-                              "border-radius: 10px;"
-                              "}"
-                              "QPushButton:hover{"
-                              "background-color:rgba(255,255,255,0.5);"
-                              "}");
-    backbutton->setMinimumWidth(100);
-    backbutton->setGeometry(width()/7,height()/6,90,30);
-    backbutton->show();
-    connect(backbutton, &QPushButton::clicked, this, &MainWindow::onBackButtonClicked);
+    createBackButton();
 
     auto statsHead = createLabel("Stats", 28, Qt::AlignCenter);
     applyShadowEffect(statsHead, BUTTON_SHADOW_BLUR_RADIUS, SHADOW_COLOR);
@@ -798,7 +1248,7 @@ void MainWindow::on_statsBtn_clicked(){
     QString statsText =
         "<h2 ><b>Your Stats:</b></h2>"
         "<ul style='display: flex; flex-direction: column; gap: 15px;'>"
-        "<li style='margin-bottom: 10px;text-align:left;'><b>High Score:  </b><span style='color:yellow;'>" + QString::number(highScore) + "</span></li>"
+        "<li style='margin-bottom: 10px;text-align:left;'><b>High Score:  </b><span>" + QString::number(highScore) + "</span></li>"
         "<li style='margin-bottom: 10px;text-align:left;'><b>Total Games Played:  </b> " + QString::number(totalGamesPlayed) + "</li>"
         "<li style='margin-bottom: 10px;text-align:left;'><b>Games Won:  </b> " + QString::number(gamesWon) + "</li>"
         "<li style='margin-bottom: 10px;text-align:left;'><b>Average Score:  </b> " + QString::number(averageScore) + "</li>"
@@ -1090,6 +1540,5 @@ bool MainWindow::createMcqTable()
         return false;
     }
 
-    qDebug() << " Table mcq_questions is ready.";
     return true;
 }
