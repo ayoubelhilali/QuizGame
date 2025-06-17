@@ -9,7 +9,7 @@ QuizGame est une application interactive de quiz développée en **Qt (C++)**, p
 
 ## ⚙️ Fonctionnalités Principales
 
-- ✅ **Affichage dynamique des questions** avec des boutons de réponse interactifs.
+- ✅ **Affichage dynamique des questions généré par API Gemini** avec des boutons de réponse interactifs.
 - 🎯 **Système de score intelligent** :
   - +10 points pour chaque bonne réponse
   - Bonus de vitesse si réponse en moins de 5 secondes (+5)
@@ -34,8 +34,12 @@ QuizGame est une application interactive de quiz développée en **Qt (C++)**, p
 QuizGame/
 ├── main.cpp
 ├── MainWindow.ui
-├── MainWindow.cpp
-├── quizlogic.cpp
+├── src/
+│   ├── mainwindow.cpp
+│   └── gemini.cpp
+├── headers/
+│   ├── mainwindow.h
+│   └── gemini.h
 ├── assets/
 │   ├── sounds/
 │   └── images/
@@ -53,6 +57,7 @@ QuizGame/
 - **QSettings** pour la sauvegarde des données
 - **QTimer**, **QLabel**, **QGraphicsEffect**, etc. pour l’UI
 - **QSoundEffect** pour les sons de feedback
+- **GeminiAPI pour genérer les questions et les réponses
 
 ---
 
@@ -72,7 +77,7 @@ CorrectPercent = 76.67%
 
 1. Cloner le projet :
    ```bash
-   git clone https://github.com/toncompte/QuizGame.git
+   git clone https://github.com/ayoubelhilali/QuizGame.git
    cd QuizGame
    ```
 
@@ -82,16 +87,9 @@ CorrectPercent = 76.67%
 
 ---
 
-## 📸 Captures d'écran supplémentaires
-
-*(Tu peux ajouter ici des captures : par exemple résultats, question active, etc.)*
-
----
-
 ## 👨‍💻 Auteur
 
 Ayoub Elhilali  
-[Ville de Rissani, Maroc 🇲🇦]
 
 ---
 
