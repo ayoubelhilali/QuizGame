@@ -50,14 +50,11 @@ The core technologies used are C++ and the Qt framework, enabling cross-platform
 
 ## 🎬 Demo
 
-🔗 **Live Demo**: [https://your-demo-url.com](https://your-demo-url.com)
+🔗 **Live Demo**: [Coming soon ...]
 
 ### Screenshots
-![Main Interface](screenshots/main-interface.png)
-*Main application interface showing the quiz categories*
-
-![Gameplay Screen](screenshots/gameplay.png)
-*Gameplay screen with question and answer options*
+![Main Interface](screenshots/HomePage.png)
+*Main application interface *
 
 ## 🚀 Quick Start
 
@@ -174,13 +171,6 @@ To run tests:
 2.  Package the executable with necessary Qt libraries.
 3.  Create an installer for the target platform.
 
-## FAQ
-
-**Q: How do I add new questions?**
-A: Edit the question data files in the `data/` directory.
-
-**Q: Can I customize the UI?**
-A: Yes, you can modify the Qt UI files in the `src/ui/` directory.
 
 ## 📄 License
 
@@ -196,9 +186,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 💬 Support
 
-- 📧 **Email**: your.email@example.com
-- 🐛 **Issues**: [GitHub Issues](https://github.com/ayoubelhilali/QuizGame/issues)
-- 📖 **Documentation**: [Full Documentation](https://docs.your-site.com)
+- 📧 **Email**: elhilaliayoub2020@gmail.com
 
 ## 🙏 Acknowledgments
 
@@ -206,4 +194,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - 📚 **Libraries used**:
   - Qt Core - Core functionalities
   - Qt Widgets - UI components
-- 👥 **Contributors**: Thanks to all [contributors](https://github.com/ayoubelhilali/QuizGame/contributors)
