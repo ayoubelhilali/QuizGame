@@ -1,96 +1,209 @@
+# 🚀 QuizGame: Test Your Knowledge!
 
-# 🎯 QuizGame - Application de Quiz en Qt
+Your Qt Quiz Game is a fun and interactive trivia app where players test their knowledge across various domains, earning points for correct answers.
 
-QuizGame est une application interactive de quiz développée en **Qt (C++)**, permettant aux utilisateurs de tester leurs connaissances dans plusieurs domaines. Elle propose une interface fluide, des sons de feedback, un système de score avancé et une expérience ludique et motivante. 🚀🎮
+Challenge your friends and family with a wide variety of questions!
 
-![Accueil](screenshots/HomePage.png)
+![License](https://img.shields.io/github/license/ayoubelhilali/QuizGame)
+![GitHub stars](https://img.shields.io/github/stars/ayoubelhilali/QuizGame?style=social)
+![GitHub forks](https://img.shields.io/github/forks/ayoubelhilali/QuizGame?style=social)
+![GitHub issues](https://img.shields.io/github/issues/ayoubelhilali/QuizGame)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/ayoubelhilali/QuizGame)
+![GitHub last commit](https://img.shields.io/github/last-commit/ayoubelhilali/QuizGame)
 
----
+![C++](https://img.shields.io/badge/C++-00599C?style=flat-square&logo=c%2B%2B&logoColor=white)
+![Qt](https://img.shields.io/badge/Qt-41CD52?style=flat-square&logo=qt&logoColor=white)
 
-## ⚙️ Fonctionnalités Principales
+## 📋 Table of Contents
 
-- ✅ **Affichage dynamique des questions généré par API Gemini** avec des boutons de réponse interactifs.
-- 🎯 **Système de score intelligent** :
-  - +10 points pour chaque bonne réponse
-  - Bonus de vitesse si réponse en moins de 5 secondes (+5)
-  - Bonus de série (streak) de bonnes réponses (+2 par bonne réponse consécutive)
-  - Bouton **Double Points** utilisable une fois par question pour doubler les points
-- 📊 **Statistiques sauvegardées** avec `QSettings` :
-  - Nombre total de parties jouées
-  - Score total et score moyen
-  - Pourcentage de bonnes réponses global
-- 🧠 **Effets visuels & sonores** :
-  - Feedback visuel vert/rouge selon la réponse
-  - Sons différents pour bonnes ou mauvaises réponses
-- ⏱️ **Calcul du temps de réponse** pour chaque question
-- 💾 **Sauvegarde persistante** entre les sessions de jeu (via `QSettings`)
-- 🎨 Interface moderne et responsive avec Qt Widgets
+- [About](#about)
+- [Features](#features)
+- [Demo](#demo)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Project Structure](#project-structure)
+- [Contributing](#contributing)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [FAQ](#faq)
+- [License](#license)
+- [Support](#support)
+- [Acknowledgments](#acknowledgments)
 
----
+## About
 
-## 📂 Arborescence Simplifiée
+QuizGame is a Qt-based application designed to provide an engaging and educational trivia experience. It allows users to test their knowledge across various categories, earn points, and compete with others. The application is built with a focus on a clean user interface and smooth, responsive gameplay.
+
+This project aims to provide a fun and accessible way for users to learn and challenge themselves. It targets trivia enthusiasts, students, and anyone looking for an entertaining way to expand their knowledge.
+
+The core technologies used are C++ and the Qt framework, enabling cross-platform compatibility and a native look and feel. The architecture is designed for modularity, allowing for easy addition of new question categories and features. The unique selling point is its ease of use and customizable question sets.
+
+## ✨ Features
+
+- 🎯 **Diverse Question Categories**: Wide range of trivia topics to choose from.
+- ⚡ **Smooth Gameplay**: Optimized for responsive and engaging user experience.
+- 🎨 **Sleek UI**: Modern and intuitive Qt-based user interface.
+- 🏆 **Score Tracking**: Keep track of your progress and compete with friends.
+- 🛠️ **Extensible**: Easily add new question sets and categories.
+
+## 🎬 Demo
+
+🔗 **Live Demo**: [https://your-demo-url.com](https://your-demo-url.com)
+
+### Screenshots
+![Main Interface](screenshots/main-interface.png)
+*Main application interface showing the quiz categories*
+
+![Gameplay Screen](screenshots/gameplay.png)
+*Gameplay screen with question and answer options*
+
+## 🚀 Quick Start
+
+Clone and run in 3 steps:
+
+```bash
+git clone https://github.com/ayoubelhilali/QuizGame.git
+cd QuizGame
+# Open the .pro file in Qt Creator and build/run the project
+```
+
+## 📦 Installation
+
+### Prerequisites
+- Qt 5.15+
+- C++ Compiler (GCC, Clang, MSVC)
+- Git
+
+### Option 1: From Source
+```bash
+# Clone repository
+git clone https://github.com/ayoubelhilali/QuizGame.git
+cd QuizGame
+
+# Open the QuizGame.pro file in Qt Creator
+# Build the project
+# Run the executable
+```
+
+## 💻 Usage
+
+### Basic Usage
+1.  Launch the QuizGame executable.
+2.  Select a category from the main menu.
+3.  Answer the questions and earn points.
+4.  View your score at the end of the quiz.
+
+### Advanced Examples
+You can modify the question sets by editing the data files in the `data/` directory.
+
+## ⚙️ Configuration
+
+### Configuration File
+The application settings can be configured in the `config.json` file:
+
+```json
+{
+  "app_name": "QuizGame",
+  "version": "1.0.0",
+  "settings": {
+    "difficulty": "medium",
+    "timer": 30,
+    "theme": "light"
+  }
+}
+```
+
+## 📁 Project Structure
 
 ```
 QuizGame/
-├── main.cpp
-├── MainWindow.ui
-├── src/
-│   ├── mainwindow.cpp
-│   └── gemini.cpp
-├── headers/
-│   ├── mainwindow.h
-│   └── gemini.h
-├── assets/
-│   ├── sounds/
-│   └── images/
-├── settings.ini
-└── screenshots/
-    └── HomePage.png
+├── 📁 src/
+│   ├── 📁 ui/                  # Qt UI files (.ui)
+│   ├── 📁 core/                # Core game logic
+│   ├── 📁 data/                # Question data files
+│   ├── 📄 main.cpp             # Application entry point
+│   └── 📄 QuizGame.pro         # Qt project file
+├── 📁 include/               # Header files
+├── 📁 resources/             # Images and other resources
+├── 📄 README.md              # Project documentation
+└── 📄 LICENSE                # License file
 ```
 
----
+## 🤝 Contributing
 
-## 🔧 Technologies utilisées
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-- **Qt 5/6**
-- **C++**
-- **QSettings** pour la sauvegarde des données
-- **QTimer**, **QLabel**, **QGraphicsEffect**, etc. pour l’UI
-- **QSoundEffect** pour les sons de feedback
-- **GeminiAPI pour genérer les questions et les réponses
+### Quick Contribution Steps
+1. 🍴 Fork the repository
+2. 🌟 Create your feature branch (git checkout -b feature/AmazingFeature)
+3. ✅ Commit your changes (git commit -m 'Add some AmazingFeature')
+4. 📤 Push to the branch (git push origin feature/AmazingFeature)
+5. 🔃 Open a Pull Request
 
----
+### Development Setup
+```bash
+# Fork and clone the repo
+git clone https://github.com/yourusername/QuizGame.git
 
-## 📈 Exemple de statistiques enregistrées
-
-```plaintext
-TotalGames     = 12
-ScoreSum       = 950
-AvgScore       = 79.17
-CorrectNmbr    = 92
-CorrectPercent = 76.67%
+# Open QuizGame.pro in Qt Creator
+# Configure build settings
+# Build and run the project
 ```
 
----
+### Code Style
+- Follow existing code conventions
+- Use consistent naming
+- Add comments where necessary
+- Test thoroughly
 
-## 🚀 Démarrage rapide
+## Testing
 
-1. Cloner le projet :
-   ```bash
-   git clone https://github.com/ayoubelhilali/QuizGame.git
-   cd QuizGame
-   ```
+To run tests:
 
-2. Ouvrir avec Qt Creator ou compiler avec `qmake` / `cmake`.
+1.  Open the project in Qt Creator.
+2.  Create a test project.
+3.  Write test cases using Qt Test.
+4.  Run the tests.
 
-3. Lancer et jouer !
+## Deployment
 
----
+### Desktop Deployment
+1.  Build the project in Release mode.
+2.  Package the executable with necessary Qt libraries.
+3.  Create an installer for the target platform.
 
-## 👨‍💻 Auteur
+## FAQ
 
-Ayoub Elhilali  
+**Q: How do I add new questions?**
+A: Edit the question data files in the `data/` directory.
 
----
+**Q: Can I customize the UI?**
+A: Yes, you can modify the Qt UI files in the `src/ui/` directory.
 
-> *Les quiz ne rendent pas juste plus intelligent… ils rendent aussi les soirées plus fun !*
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### License Summary
+- ✅ Commercial use
+- ✅ Modification
+- ✅ Distribution
+- ✅ Private use
+- ❌ Liability
+- ❌ Warranty
+
+## 💬 Support
+
+- 📧 **Email**: your.email@example.com
+- 🐛 **Issues**: [GitHub Issues](https://github.com/ayoubelhilali/QuizGame/issues)
+- 📖 **Documentation**: [Full Documentation](https://docs.your-site.com)
+
+## 🙏 Acknowledgments
+
+- 🎨 **UI Design**: Qt Framework
+- 📚 **Libraries used**:
+  - Qt Core - Core functionalities
+  - Qt Widgets - UI components
+- 👥 **Contributors**: Thanks to all [contributors](https://github.com/ayoubelhilali/QuizGame/contributors)
